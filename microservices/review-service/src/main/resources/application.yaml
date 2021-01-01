@@ -1,0 +1,9 @@
+server:
+  port: 7003
+  error:
+    include-message: always
+
+logging:
+  level:
+    root: INFO
+    com.habeebcycle: DEBUG

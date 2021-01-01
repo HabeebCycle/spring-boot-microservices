@@ -1,0 +1,22 @@
+server:
+  port: 7000
+  error:
+    include-message: always
+
+app:
+  product-service:
+    host: localhost
+    port: 7001
+
+  recommendation-service:
+    host: localhost
+    port: 7002
+
+  review-service:
+    host: localhost
+    port: 7003
+
+logging:
+  level:
+    root: INFO
+    com.habeebcycle: DEBUG
