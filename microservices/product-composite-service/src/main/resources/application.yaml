@@ -1,3 +1,44 @@
+api:
+  common:
+    version: 1.0.0
+    title: Product Microservices API
+    description: Developing Microservices using springboot and spring cloud
+    termsOfServiceUrl: Apache OS
+    license: Apache License 2.0
+    licenseUrl: Apache URL
+    contact:
+      name: Habeeb Okunade
+      url: habeebcycle.com
+      email: habeebcycle@gmail.com
+  product-composite-service:
+    get-composite-product:
+      description: Returns a composite view of the specified product id
+      notes: |
+        # Normal response
+        If the requested product id is found, the method will return information regarding:
+        1. Base product information
+        2. Reviews
+        3. Recommendations
+        4. Service/Server addresses\n(Technical information regarding the addresses of the microservices that created the response)
+
+        # Expected partial and error responses
+        In the following cases, only a partial response will be created (used to simplify testing of error conditions)
+
+        ## Product id 113
+        200 - OK, but no recommendations will be returned
+
+        ## Product id 213
+        200 - OK, but no reviews will be returned
+
+        ## Non numerical product id
+        400 - A <b>Bad Request</b> error will be returned
+
+        ## Product id 13
+        404 - A <b>Not Found</b> error will be returned
+
+        ## Negative product ids
+        422 - An <b>Unprocessable Entity</b> error will be returned
+
 server:
   port: 7000
   error:

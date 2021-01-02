@@ -24,4 +24,14 @@ server.port: 8080``` for each of the microservices.
 ./mvn clean install
 docker-compose build
 docker-compose up -d
+
+# OR
+
+mvn clean install && docker-compose build && docker-compose up -d
+```
+
+### Swagger API Documentation
+Visit the API documentation at
+```shell
+http://localhost:8080/swagger-ui/index.html
 ```
