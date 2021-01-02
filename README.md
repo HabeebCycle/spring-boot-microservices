@@ -12,3 +12,16 @@
 
 ## Build this project
 This project is created little by little with each branch for difficulty level. Clone the branch you need to build and run `mvn build`
+
+### Docker Setup
+* Create a new spring profile in the application.yaml file called 'docker' as ```spring.config.activate:on-profile: - docker 
+server.port: 8080``` for each of the microservices. 
+  
+* Create a Dockerfile at the root folder of each microservice.
+* Create a docker-compose.yaml file at the root of the parent.
+* Run the following command:
+```shell
+./mvn clean install
+docker-compose build
+docker-compose up -d
+```
