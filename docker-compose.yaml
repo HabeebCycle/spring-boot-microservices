@@ -2,31 +2,90 @@ version: '2.1'
 
 services:
   product-service:
+    #image: product-service:04-data-persistence
     build: microservices/product-service
-    mem_limit: 350m
+    mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     container_name: product-service
+    depends_on:
+      - mongodb
 
   recommendation-service:
+    #image: recommendation-service:04-data-persistence
     build: microservices/recommendation-service
-    mem_limit: 350m
+    mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     container_name: recommendation-service
+    depends_on:
+      - redis
 
   review-service:
+    #image: review-service:04-data-persistence
     build: microservices/review-service
-    mem_limit: 350m
+    mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     container_name: review-service
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   product-composite-service:
+    #image: product-composite-service:04-data-persistence
     build: microservices/product-composite-service
-    mem_limit: 350m
+    mem_limit: 300m
     ports:
-      - "8080:8080"
+    - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     container_name: product-composite-service
+
+  # mongodb cli:
+  # $ docker-compose exec mongodb mongo --quiet
+  mongodb:
+    image: mongo:3.6.9
+    mem_limit: 300m
+    ports:
+    - "27017:27017"
+    container_name: mongodb
+    command: mongod --smallfiles
+
+  # redis cli
+  # $ docker-compose exec redis redis-cli
+  redis:
+    image: redis:alpine
+    mem_limit: 300m
+    ports:
+    - "6379:6379"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    container_name: redis
+    command: redis-server --requirepass pwd
+    healthcheck:
+      test: ["CMD", "redis-cli", "auth", "pwd", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # mysql cli
+  # $ mysql -uroot -h127.0.0.1 -p
+  # $ docker-compose exec mysql mysql -uuser -p review-db
+  mysql:
+    image: mysql:5.7
+    mem_limit: 300m
+    ports:
+    - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpwd
+      - MYSQL_DATABASE=review-db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=pwd
+    container_name: mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uuser", "-ppwd", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+

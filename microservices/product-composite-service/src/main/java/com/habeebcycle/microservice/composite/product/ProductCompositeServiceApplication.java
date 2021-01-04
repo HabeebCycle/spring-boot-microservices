@@ -44,6 +44,8 @@ public class ProductCompositeServiceApplication {
 				.paths(PathSelectors.any())
 				.build()
 				.globalResponses(HttpMethod.GET, Collections.emptyList())
+				.globalResponses(HttpMethod.POST, Collections.emptyList())
+				.globalResponses(HttpMethod.DELETE, Collections.emptyList())
 				.tags(new Tag("product-composite-service", "REST API for composite product information."))
 				.apiInfo(new ApiInfo(
 						apiTitle, apiDescription, apiVersion, apiTermsOfServiceUrl,

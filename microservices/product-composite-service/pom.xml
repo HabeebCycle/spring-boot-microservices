@@ -16,6 +16,9 @@
 
 	<properties>
 		<java.version>11</java.version>
+		<swagger.version>3.0.0</swagger.version>
+		<api.version>0.0.1-SNAPSHOT</api.version>
+		<util.version>0.0.1-SNAPSHOT</util.version>
 	</properties>
 
 	<dependencies>
@@ -31,7 +34,7 @@
 		<dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-boot-starter</artifactId>
-			<version>3.0.0</version>
+			<version>${swagger.version}</version>
 		</dependency>
 
 		<dependency>
@@ -49,13 +52,13 @@
 		<dependency>
 			<groupId>com.habeebcycle.microservice.library</groupId>
 			<artifactId>api</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${api.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.habeebcycle.microservice.library</groupId>
 			<artifactId>util</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${util.version}</version>
 			<scope>compile</scope>
 		</dependency>
 

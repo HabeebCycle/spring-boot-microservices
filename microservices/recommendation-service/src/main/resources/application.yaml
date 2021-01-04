@@ -3,10 +3,17 @@ server:
   error:
     include-message: always
 
+spring.redis:
+  host: localhost
+  port: 6379
+  database: 0
+  password: pwd
+
 logging:
   level:
     root: INFO
     com.habeebcycle: DEBUG
+    org.springframework.data.redis: DEBUG
 
 ---
 spring:
@@ -14,6 +21,7 @@ spring:
     activate:
       on-profile:
         - docker
+  redis.host: redis
 
 server:
   port: 8080

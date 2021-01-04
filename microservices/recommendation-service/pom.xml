@@ -16,6 +16,10 @@
 
 	<properties>
 		<java.version>11</java.version>
+		<api.version>0.0.1-SNAPSHOT</api.version>
+		<util.version>0.0.1-SNAPSHOT</util.version>
+		<mapstruct.version>1.4.1.Final</mapstruct.version>
+		<embed-redis.version>1.11.4</embed-redis.version>
 	</properties>
 
 	<dependencies>
@@ -26,6 +30,24 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>${mapstruct.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct-processor</artifactId>
+			<version>${mapstruct.version}</version>
 		</dependency>
 
 		<dependency>
@@ -38,18 +60,30 @@
 			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>it.ozimov</groupId>
+			<artifactId>embedded-redis</artifactId>
+			<version>0.7.3</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 
 		<!-- Application Libraries -->
 		<dependency>
 			<groupId>com.habeebcycle.microservice.library</groupId>
 			<artifactId>api</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${api.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.habeebcycle.microservice.library</groupId>
 			<artifactId>util</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${util.version}</version>
 			<scope>compile</scope>
 		</dependency>
 
