@@ -2,17 +2,21 @@ package com.habeebcycle.microservice.core.product;
 
 import com.habeebcycle.microservice.core.product.persistence.ProductRepository;
 import com.habeebcycle.microservice.library.api.core.product.Product;
+import com.habeebcycle.microservice.library.api.event.DataEvent;
+import com.habeebcycle.microservice.library.util.exceptions.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.integration.channel.AbstractMessageChannel;
+import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Mono;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -26,18 +30,30 @@ class ProductServiceApplicationTests {
 	@Autowired
 	private ProductRepository repository;
 
+	@Autowired
+	private Sink channels;
+
+	private AbstractMessageChannel input = null;
+
 	@BeforeEach
 	void setUpDb() {
-		repository.deleteAll();
+		input = (AbstractMessageChannel) channels.input();
+		repository.deleteAll().block();
+
+		assertNotNull(input);
 	}
 
 	@Test
 	void getProductByIdTest() {
 		int productId = 1;
 
-		postAndVerifyProduct(productId, HttpStatus.OK);
+		assertNull(repository.findByProductId(productId).block());
+		assertEquals(0, repository.count().block().longValue());
 
-		assertTrue(repository.findByProductId(productId).isPresent());
+		assertTrue(sendCreateProductEvent(productId));
+
+		assertNotNull(repository.findByProductId(productId).block());
+		assertEquals(1, repository.count().block().longValue());
 
 		getAndVerifyProduct(productId, HttpStatus.OK)
 				.jsonPath("$.productId").isEqualTo(productId);
@@ -48,13 +64,23 @@ class ProductServiceApplicationTests {
 
 		int productId = 1;
 
-		postAndVerifyProduct(productId, HttpStatus.OK);
+		assertNull(repository.findByProductId(productId).block());
 
-		assertTrue(repository.findByProductId(productId).isPresent());
+		assertTrue(sendCreateProductEvent(productId));
 
-		postAndVerifyProduct(productId, HttpStatus.BAD_REQUEST)
-				.jsonPath("$.path").isEqualTo("/product")
-				.jsonPath("$.message").isEqualTo("Duplicate key, Product Id: " + productId);
+		assertNotNull(repository.findByProductId(productId).block());
+
+		try {
+			sendCreateProductEvent(productId);
+			fail("Expected a MessagingException here!");
+		} catch (MessagingException me) {
+			if (me.getCause() instanceof BadRequestException) {
+				BadRequestException bre = (BadRequestException) me.getCause();
+				assertEquals("Duplicate key, Product Id: " + productId, bre.getMessage());
+			} else {
+				fail("Expected a BadRequestException as the root cause!");
+			}
+		}
 	}
 
 	@Test
@@ -62,14 +88,13 @@ class ProductServiceApplicationTests {
 
 		int productId = 1;
 
-		postAndVerifyProduct(productId, HttpStatus.OK);
-		assertTrue(repository.findByProductId(productId).isPresent());
+		assertTrue(sendCreateProductEvent(productId));
+		assertNotNull(repository.findByProductId(productId).block());
 
-		deleteAndVerifyProduct(productId, HttpStatus.OK);
-		assertFalse(repository.findByProductId(productId).isPresent());
-		assertTrue(repository.findByProductId(productId).isEmpty());
+		assertTrue(sendDeleteProductEvent(productId));
+		assertNull(repository.findByProductId(productId).block());
 
-		deleteAndVerifyProduct(productId, HttpStatus.OK);
+		assertTrue(sendDeleteProductEvent(productId));
 	}
 
 	@Test
@@ -117,25 +142,15 @@ class ProductServiceApplicationTests {
 				.expectBody();
 	}
 
-	private WebTestClient.BodyContentSpec postAndVerifyProduct(int productId, HttpStatus expectedStatus) {
+	private boolean sendCreateProductEvent(int productId) {
 		Product product = new Product(productId, "Name " + productId, productId, "SA");
-		return client.post()
-				.uri("/product")
-				.body(Mono.just(product), Product.class)
-				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isEqualTo(expectedStatus)
-				.expectHeader().contentType(MediaType.APPLICATION_JSON)
-				.expectBody();
+		DataEvent<Integer, Product> event = new DataEvent<>(DataEvent.Type.CREATE, productId, product);
+		return input.send(new GenericMessage<>(event));
 	}
 
-	private WebTestClient.BodyContentSpec deleteAndVerifyProduct(int productId, HttpStatus expectedStatus) {
-		return client.delete()
-				.uri("/product/" + productId)
-				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isEqualTo(expectedStatus)
-				.expectBody();
+	private boolean sendDeleteProductEvent(int productId) {
+		DataEvent<Integer, Product> event = new DataEvent<>(DataEvent.Type.DELETE, productId, null);
+		return input.send(new GenericMessage<>(event));
 	}
 
 }

@@ -18,6 +18,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -41,13 +42,13 @@ class ProductCompositeServiceApplicationTests {
 	public void setUp() {
 
 		Mockito.when(compositeIntegration.getProduct(PRODUCT_ID_OK))
-				.thenReturn(new Product(PRODUCT_ID_OK, "mock-name", 1, "mock-address"));
+				.thenReturn(Mono.just(new Product(PRODUCT_ID_OK, "mock-name", 1, "mock-address")));
 		Mockito.when(compositeIntegration.getRecommendations(PRODUCT_ID_OK))
-				.thenReturn(Collections.singletonList(new Recommendation(PRODUCT_ID_OK, 1,
-						"mock-author", 1, "mock-content", "mock-address")));
+				.thenReturn(Flux.fromIterable(Collections.singletonList(new Recommendation(PRODUCT_ID_OK, 1,
+						"mock-author", 1, "mock-content", "mock-address"))));
 		Mockito.when(compositeIntegration.getReviews(PRODUCT_ID_OK))
-				.thenReturn(Collections.singletonList(new Review(PRODUCT_ID_OK, 1, "mock-author",
-						"mock-subject", "mock-content", "mock-address")));
+				.thenReturn(Flux.fromIterable(Collections.singletonList(new Review(PRODUCT_ID_OK, 1, "mock-author",
+						"mock-subject", "mock-content", "mock-address"))));
 
 		Mockito.when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND))
 				.thenThrow(new NotFoundException("400 NOT_FOUND: " + PRODUCT_ID_NOT_FOUND));

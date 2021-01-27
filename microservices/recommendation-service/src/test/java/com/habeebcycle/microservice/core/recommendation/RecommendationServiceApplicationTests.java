@@ -1,21 +1,25 @@
 package com.habeebcycle.microservice.core.recommendation;
 
 import com.habeebcycle.microservice.core.recommendation.controller.RecommendationRepoService;
-import com.habeebcycle.microservice.core.recommendation.persistence.RecommendationEntity;
 import com.habeebcycle.microservice.library.api.core.recommendation.Recommendation;
+import com.habeebcycle.microservice.library.api.event.DataEvent;
+import com.habeebcycle.microservice.library.util.exceptions.BadRequestException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.integration.channel.AbstractMessageChannel;
+import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Mono;
 import redis.embedded.RedisServer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -28,6 +32,11 @@ class RecommendationServiceApplicationTests {
 
 	@Autowired
 	private RecommendationRepoService repository;
+
+	@Autowired
+	private Sink channels;
+
+	private AbstractMessageChannel input = null;
 
 	private static RedisServer REDISSERVER = new RedisServer(6379);
 
@@ -43,7 +52,11 @@ class RecommendationServiceApplicationTests {
 
 	@BeforeEach
 	void setUpDB() {
-		repository.deleteAll();
+		input = (AbstractMessageChannel) channels.input();
+		repository.deleteAll().block();
+
+		assertNotNull(input);
+		assertEquals(0, repository.count().block());
 	}
 
 	@Test
@@ -51,11 +64,11 @@ class RecommendationServiceApplicationTests {
 
 		int productId = 1;
 
-		postAndVerifyRecommendation(productId, 1, HttpStatus.OK);
-		postAndVerifyRecommendation(productId, 2, HttpStatus.OK);
-		postAndVerifyRecommendation(productId, 3, HttpStatus.OK);
+		sendCreateRecommendationEvent(productId, 1);
+		sendCreateRecommendationEvent(productId, 2);
+		sendCreateRecommendationEvent(productId, 3);
 
-		assertEquals(3, repository.findByProductId(productId).size());
+		assertEquals(3, repository.findByProductId(productId).count().block());
 
 		getAndVerifyRecommendationsByProductId(productId, HttpStatus.OK)
 				.jsonPath("$.length()").isEqualTo(3)
@@ -69,17 +82,23 @@ class RecommendationServiceApplicationTests {
 		int productId = 1;
 		int recommendationId = 1;
 
-		postAndVerifyRecommendation(productId, recommendationId, HttpStatus.OK)
-				.jsonPath("$.productId").isEqualTo(productId)
-				.jsonPath("$.recommendationId").isEqualTo(recommendationId);
+		sendCreateRecommendationEvent(productId, recommendationId);
 
-		assertEquals(1, repository.count());
+		assertEquals(1, repository.count().block());
 
-		postAndVerifyRecommendation(productId, recommendationId, HttpStatus.BAD_REQUEST)
-				.jsonPath("$.path").isEqualTo("/recommendation")
-				.jsonPath("$.message").isEqualTo("Duplicate key, Product Id: 1, Recommendation Id: 1");
+		try {
+			sendCreateRecommendationEvent(productId, recommendationId);
+			fail("Expected a MessagingException here!");
+		} catch (MessagingException me) {
+			if(me.getCause() instanceof BadRequestException) {
+				BadRequestException bre = (BadRequestException) me.getCause();
+				assertEquals("Duplicate key, Product Id: 1, Recommendation Id: 1", bre.getMessage());
+			} else {
+				fail("Expected a BadRequestException as the root cause!");
+			}
+		}
 
-		assertEquals(1, repository.count());
+		assertEquals(1, repository.count().block());
 	}
 
 	@Test
@@ -88,13 +107,13 @@ class RecommendationServiceApplicationTests {
 		int productId = 1;
 		int recommendationId = 1;
 
-		postAndVerifyRecommendation(productId, recommendationId, HttpStatus.OK);
-		assertEquals(1, repository.findByProductId(productId).size());
+		sendCreateRecommendationEvent(productId, recommendationId);
+		assertEquals(1, repository.findByProductId(productId).count().block());
 
-		deleteAndVerifyRecommendationsByProductId(productId, HttpStatus.OK);
-		assertEquals(0, repository.findByProductId(productId).size());
+		sendDeleteRecommendationEvent(productId);
+		assertEquals(0, repository.findByProductId(productId).count().block());
 
-		deleteAndVerifyRecommendationsByProductId(productId, HttpStatus.OK);
+		sendDeleteRecommendationEvent(productId);
 	}
 
 	@Test
@@ -147,25 +166,17 @@ class RecommendationServiceApplicationTests {
 				.expectBody();
 	}
 
-	private WebTestClient.BodyContentSpec postAndVerifyRecommendation(int productId, int recommendationId, HttpStatus expectedStatus) {
-		Recommendation recommendation = new Recommendation(productId, recommendationId, "Author " + recommendationId, recommendationId, "Content " + recommendationId, "SA");
-		return client.post()
-				.uri("/recommendation")
-				.body(Mono.just(recommendation), Recommendation.class)
-				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isEqualTo(expectedStatus)
-				.expectHeader().contentType(MediaType.APPLICATION_JSON)
-				.expectBody();
+	private void sendCreateRecommendationEvent(int productId, int recommendationId) {
+		Recommendation recommendation = new Recommendation(productId, recommendationId, "Author " + recommendationId,
+				recommendationId, "Content " + recommendationId, "SA");
+
+		DataEvent<Integer, Recommendation> event = new DataEvent<>(DataEvent.Type.CREATE, productId, recommendation);
+		input.send(new GenericMessage<>(event));
 	}
 
-	private WebTestClient.BodyContentSpec deleteAndVerifyRecommendationsByProductId(int productId, HttpStatus expectedStatus) {
-		return client.delete()
-				.uri("/recommendation?productId=" + productId)
-				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isEqualTo(expectedStatus)
-				.expectBody();
+	private void sendDeleteRecommendationEvent(int productId) {
+		DataEvent<Integer, Recommendation> event = new DataEvent<>(DataEvent.Type.DELETE, productId, null);
+		input.send(new GenericMessage<>(event));
 	}
 
 

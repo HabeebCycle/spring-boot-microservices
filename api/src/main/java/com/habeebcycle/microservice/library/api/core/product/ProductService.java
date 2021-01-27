@@ -2,30 +2,28 @@ package com.habeebcycle.microservice.library.api.core.product;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 public interface ProductService {
 
     /**
+     * This still use non-blocking synchronous HTTP call
+     *
      *  Sample usage: curl $HOST:$PORT/product/123
      *
      * @param productId - The id of the product
      * @return the product, if found, else null
      */
     @GetMapping(value = "/product/{productId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    Product getProduct(@PathVariable int productId);
+    Mono<Product> getProduct(@PathVariable int productId);
 
     /**
-     *  Sample usage:
-     *
-     *  curl -X POST $HOST:$PORT/product \
-     *   -H "Content-Type: application/json" --data \
-     *   '{"productId":123,"name":"Product 123","weight":123}'
-     *
-     * @param product - The JSON body of the new product
-     * @return The newly created product
+     * This will be called by event-driven mechanism. Once their is a message
+     * on the queue topic to create a product, it will be triggered by that event
+     * to save it into the database.
+     * @param product - The JSON product in the message queue.
+     * @return the created product
      */
-    @PostMapping(value = "/product",
-            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     Product createProduct(@RequestBody Product product);
 
     /*
@@ -45,12 +43,10 @@ public interface ProductService {
     Product updateProduct(@PathVariable int productId, @RequestBody Product product);*/
 
     /**
-     * Sample usage:
-     *
-     * curl -X DELETE $HOST:$PORT/product/123
-     *
-     * @param productId - The id of the product to be deleted
+     * This will be called by event-driven mechanism. Once their is a message
+     * on the queue topic to delete a product, it will be triggered by that event
+     * and use the productId to delete the particular product from its database.
+     * @param productId - The productId in the message queue.
      */
-    @DeleteMapping(value = "/product/{productId}")
     void deleteProduct(@PathVariable int productId);
 }

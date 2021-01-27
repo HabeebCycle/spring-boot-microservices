@@ -2,27 +2,33 @@ version: '2.1'
 
 services:
   product-service:
-    #image: product-service:04-data-persistence
+    #image: product-service:05-reactive-event-driven
     build: microservices/product-service
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     container_name: product-service
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   recommendation-service:
-    #image: recommendation-service:04-data-persistence
+    #image: recommendation-service:05-reactive-event-driven
     build: microservices/recommendation-service
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     container_name: recommendation-service
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   review-service:
-    #image: review-service:04-data-persistence
+    #image: review-service:05-reactive-event-driven
     build: microservices/review-service
     mem_limit: 300m
     environment:
@@ -31,9 +37,11 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   product-composite-service:
-    #image: product-composite-service:04-data-persistence
+    #image: product-composite-service:05-reactive-event-driven
     build: microservices/product-composite-service
     mem_limit: 300m
     ports:
@@ -41,6 +49,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     container_name: product-composite-service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   # mongodb cli:
   # $ docker-compose exec mongodb mongo --quiet
@@ -51,6 +62,12 @@ services:
     - "27017:27017"
     container_name: mongodb
     command: mongod --smallfiles
+    healthcheck:
+      # "mongo --eval 'db.stats().ok'"
+      test: ["CMD", "mongo", "--eval", "'db.stats().ok'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # redis cli
   # $ docker-compose exec redis redis-cli
@@ -84,7 +101,27 @@ services:
       - MYSQL_PASSWORD=pwd
     container_name: mysql
     healthcheck:
+      # "/usr/bin/mysql --user=user --password=pwd --execute \"SHOW DATABASES;\""
       test: ["CMD", "mysqladmin", "ping", "-uuser", "-ppwd", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # rabbitmq
+  # username: guest, password: guest
+  rabbitmq:
+    image: rabbitmq:3.8.9-management-alpine
+    mem_limit: 300m
+    ports:
+    - "5672:5672"
+    - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    container_name: rabbitmq
+    # Enable the web management page on port 15672 : http://127.0.0.1/15672 Username: guest, Password: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
       timeout: 5s
       retries: 10

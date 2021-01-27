@@ -8,11 +8,10 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.GenericToStringSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.serializer.*;
 
 @Configuration
 @EnableCaching
@@ -29,26 +28,42 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String redisPassword;
 
+    /*@Bean
+    ReactiveRedisConnectionFactory redisConnectionFactory() {
+        return lettuceConnectionFactory();
+    }*/
+
+    /*@Bean
+    ReactiveRedisOperations<String, RecommendationEntity> redisOperations(LettuceConnectionFactory factory) {
+        Jackson2JsonRedisSerializer<RecommendationEntity> serializer
+                = new Jackson2JsonRedisSerializer<>(RecommendationEntity.class);
+
+        RedisSerializationContext.RedisSerializationContextBuilder<String, RecommendationEntity> builder
+                = RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
+
+        RedisSerializationContext<String, RecommendationEntity> context = builder.value(serializer).build();
+
+        return new ReactiveRedisTemplate<>(factory, context);
+    }*/
+
     @Bean
-    JedisConnectionFactory jedisConnectionFactory() {
+    public ReactiveRedisOperations<String, RecommendationEntity> redisOperations(LettuceConnectionFactory connectionFactory) {
+        RedisSerializationContext<String, RecommendationEntity> serializationContext = RedisSerializationContext
+                .<String, RecommendationEntity>newSerializationContext(new StringRedisSerializer())
+                .key(new StringRedisSerializer())
+                .value(new GenericToStringSerializer<>(RecommendationEntity.class))
+                .hashKey(new StringRedisSerializer())
+                .hashValue(new GenericJackson2JsonRedisSerializer())
+                .build();
+        return new ReactiveRedisTemplate<>(connectionFactory, serializationContext);
+    }
+
+    @Bean
+    LettuceConnectionFactory lettuceConnectionFactory() {
         RedisStandaloneConfiguration redisStandaloneConfig = new RedisStandaloneConfiguration();
         redisStandaloneConfig.setHostName(redisHost);
         redisStandaloneConfig.setPort(redisPort);
         redisStandaloneConfig.setPassword(redisPassword);
-        return new JedisConnectionFactory(redisStandaloneConfig);
-    }
-
-    @Bean
-    public RedisTemplate<String, RecommendationEntity> redisTemplate() {
-        final RedisTemplate<String, RecommendationEntity> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(jedisConnectionFactory());
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new GenericToStringSerializer<>(RecommendationEntity.class));
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-        LOG.info("Connected to Redis on: " + redisHost + ":" + redisPort);
-
-        return redisTemplate;
+        return new LettuceConnectionFactory(redisStandaloneConfig);
     }
 }

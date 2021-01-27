@@ -3,17 +3,58 @@ server:
   error:
     include-message: always
 
-spring.redis:
-  host: localhost
-  port: 6379
-  database: 0
-  password: pwd
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    password: pwd
 
+  # RabbitMQ parameters
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+
+  # Messaging binders for the cloud streaming
+  cloud.stream:
+    # Default binder
+    defaultBinder: rabbit
+    default.contentType: application/json
+    bindings.input:
+      destination: recommendations
+      group: recommendationsGroup
+    # Default consumer input binding parameters
+    bindings.input.consumer:
+      maxAttempts: 3
+      backOffInitialInterval: 500
+      backOffMaxInterval: 1000
+      backOffMultiplier: 2.0
+    # RabbitMQ consumer input binding parameters
+    rabbit.bindings.input.consumer:
+      autoBindDlq: true
+      republishToDlq: true
+    # Kafka consumer input binding parameters
+    kafka.bindings.input.consumer:
+      enableDlq: true
+    # Kafka binder broker (zookeeper) host & port
+    kafka.binder:
+      brokers: 127.0.0.1       # Kafka host
+      defaultBrokerPort: 9092  # Kafka port
+
+# Logging settings
 logging:
   level:
     root: INFO
     com.habeebcycle: DEBUG
     org.springframework.data.redis: DEBUG
+
+# Actuator endpoints
+management.endpoints:
+  health.show-details: "ALWAYS"
+  web.exposure.include: "*"   # Lock this up in production
+
 
 ---
 spring:
@@ -22,6 +63,8 @@ spring:
       on-profile:
         - docker
   redis.host: redis
+  rabbitmq.host: rabbitmq
+  cloud.stream.kafka.binder.brokers: kafka
 
 server:
   port: 8080

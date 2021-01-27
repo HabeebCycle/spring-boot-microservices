@@ -1,40 +1,39 @@
 package com.habeebcycle.microservice.core.recommendation.persistence;
 
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ReactiveHashOperations;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
 public class RecommendationRepoImpl implements RecommendationRepository{
 
     private final static String KEY = "RECOMMENDATION";
 
-    private final RedisTemplate<String, RecommendationEntity> redisTemplate;
-    private final HashOperations<String, String, RecommendationEntity> hashOperations;
+    private final ReactiveRedisOperations<String, RecommendationEntity> redisOperations;
+    private final ReactiveHashOperations<String, String, RecommendationEntity> hashOperations;
 
     @Autowired
-    public RecommendationRepoImpl(RedisTemplate<String, RecommendationEntity> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-        this.hashOperations = redisTemplate.opsForHash();
+    public RecommendationRepoImpl(ReactiveRedisOperations<String, RecommendationEntity> redisOperations) {
+        this.redisOperations = redisOperations;
+        this.hashOperations = redisOperations.opsForHash();
     }
 
     @Override
-    public Optional<RecommendationEntity> findById(String id) {
-        RecommendationEntity entity = hashOperations.get(KEY, id);
-        return Optional.ofNullable(entity);
+    public Mono<RecommendationEntity> findById(String id) {
+        return hashOperations.get(KEY, id);
     }
 
     @Override
-    public RecommendationEntity save(RecommendationEntity entity) {
+    public Mono<RecommendationEntity> save(RecommendationEntity entity) {
         if (entity.getId() == null) {
 
             /*
@@ -49,89 +48,147 @@ public class RecommendationRepoImpl implements RecommendationRepository{
                 @Document(collection="recommendations")
                 @CompoundIndex(name = "prod-rec-id", unique = true, def = "{'productId': 1, 'recommendationId' : 1}")
              */
-            if (findByProductIdAndRecommendationId(entity.getProductId(), entity.getRecommendationId()).isPresent())
-                throw new DuplicateKeyException("Duplicate key, Product Id: " +  entity.getProductId() +
-                        ", Recommendation Id: " + entity.getRecommendationId());
-
-            entity.setId(createEntityId());
-            entity.setVersion(0);
+            return findByProductIdAndRecommendationId(entity.getProductId(), entity.getRecommendationId())
+                    .flatMap(e -> Mono.error(new DuplicateKeyException("Duplicate key, Product Id: "
+                            + entity.getProductId() + ", Recommendation Id: " + entity.getRecommendationId())))
+                    .switchIfEmpty(Mono.defer(() -> addNewEntity(entity)))
+                    .thenReturn(entity);
         } else {
-            Optional<RecommendationEntity> foundEntity = findById(entity.getId());
-            if (foundEntity.isEmpty()) {
-                entity.setId(createEntityId());
-                entity.setVersion(0);
-            } else {
-                int version = foundEntity.get().getVersion();
-                if (version == entity.getVersion())
-                    entity.setVersion(version + 1);
-                else
-                    throw new OptimisticLockingFailureException("This data has been updated earlier by another object.");
-            }
+            return findById(entity.getId())
+                    .flatMap(e -> {
+                        if(!e.getVersion().equals(entity.getVersion())) {
+                            return Mono.error(
+                                    new OptimisticLockingFailureException(
+                                            "This data has been updated earlier by another object."));
+                        } else {
+                            entity.setVersion(entity.getVersion() + 1);
+                            return hashOperations.put(KEY, entity.getId(), entity)
+                                    .map(isSaved -> entity);
+                        }
+
+                    })
+                    .switchIfEmpty(Mono.defer(() -> addNewEntity(entity)));
+                    //.thenReturn(entity);
         }
-
-        hashOperations.put(KEY, entity.getId(), entity);
-        return entity;
     }
 
     @Override
-    public List<RecommendationEntity> findByProductId(int productId) {
+    public Flux<RecommendationEntity> findByProductId(int productId) {
         return hashOperations.values(KEY)
-                .stream()
                 .filter(r -> r.getProductId() == productId)
-                .sorted(Comparator.comparingInt(RecommendationEntity::getRecommendationId))
-                .collect(Collectors.toList());
+                .sort(Comparator.comparingInt(RecommendationEntity::getRecommendationId));
     }
 
     @Override
-    public List<RecommendationEntity> findByRecommendationId(int recommendationId) {
+    public Flux<RecommendationEntity> findByRecommendationId(int recommendationId) {
         return hashOperations.values(KEY)
-                .stream().filter(r -> r.getRecommendationId() == recommendationId)
-                .sorted(Comparator.comparingInt(RecommendationEntity::getRecommendationId))
-                .collect(Collectors.toList());
+                .filter(r -> r.getRecommendationId() == recommendationId)
+                .sort(Comparator.comparingInt(RecommendationEntity::getRecommendationId));
+                //.sort(Comparator.comparing(RecommendationEntity::getRecommendationId));
     }
 
     @Override
-    public Optional<RecommendationEntity> findByProductIdAndRecommendationId(int productId, int recommendationId) {
+    public Mono<RecommendationEntity> findByProductIdAndRecommendationId(int productId, int recommendationId) {
         return hashOperations.values(KEY)
-                .stream()
                 .filter(r -> r.getProductId() == productId && r.getRecommendationId() == recommendationId)
-                .findFirst();
+                .singleOrEmpty();
     }
 
     @Override
-    public void deleteById(String id) {
-        hashOperations.delete(KEY, id);
+    public Mono<Void> deleteById(String id) {
+        return hashOperations.remove(KEY, id).then();
     }
 
     @Override
-    public void delete(RecommendationEntity entity) {
-        hashOperations.delete(KEY, entity.getId());
+    public Mono<Void> delete(RecommendationEntity entity) {
+        return hashOperations.remove(KEY, entity.getId()).then();
     }
 
     @Override
-    public void deleteByProductId(int productId) {
-        hashOperations.values(KEY)
-                .stream().filter(r -> r.getProductId() == productId).collect(Collectors.toList())
-                .forEach(r -> hashOperations.delete(KEY, r.getId()));
+    public Mono<Void> deleteByProductId(int productId) {
+        return hashOperations.values(KEY)
+                .filter(r -> r.getProductId() == productId)
+                .flatMap(r -> hashOperations.remove(KEY, r.getId()))
+                .then();
     }
 
     @Override
-    public void deleteAll() {
-        redisTemplate.delete(KEY);
+    public Mono<Void> deleteAll() {
+        return hashOperations.delete(KEY).then();
     }
 
     @Override
-    public Integer count() {
-        return hashOperations.values(KEY).size();
+    public Mono<Long> count() {
+        return hashOperations.values(KEY).count();
     }
 
     @Override
-    public Boolean existsById(String id) {
-        RecommendationEntity entity = hashOperations.get(KEY, id);
-        return Optional.ofNullable(entity).isPresent();
+    public Mono<Boolean> existsById(String id) {
+        return hashOperations.hasKey(KEY, id);
+    }
+
+    @Override
+    public Flux<RecommendationEntity> findAll() {
+        return hashOperations.values(KEY);
     }
 
     public String createEntityId() {
         return UUID.randomUUID().toString().replaceAll("-", "");
+    }
+
+    private Mono<RecommendationEntity> addNewEntity(RecommendationEntity entity) {
+        entity.setId(createEntityId());
+        entity.setVersion(0);
+        return hashOperations.put(KEY, entity.getId(), entity)
+                .map(isSaved -> entity);
+    }
+
+
+    //Others
+
+
+    @Override
+    public <S extends RecommendationEntity> Flux<S> saveAll(Iterable<S> iterable) {
+        return null;
+    }
+
+    @Override
+    public <S extends RecommendationEntity> Flux<S> saveAll(Publisher<S> publisher) {
+        return null;
+    }
+
+    @Override
+    public Mono<RecommendationEntity> findById(Publisher<String> publisher) {
+        return null;
+    }
+
+    @Override
+    public Mono<Boolean> existsById(Publisher<String> publisher) {
+        return null;
+    }
+
+    @Override
+    public Flux<RecommendationEntity> findAllById(Iterable<String> iterable) {
+        return null;
+    }
+
+    @Override
+    public Flux<RecommendationEntity> findAllById(Publisher<String> publisher) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> deleteById(Publisher<String> publisher) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> deleteAll(Iterable<? extends RecommendationEntity> iterable) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> deleteAll(Publisher<? extends RecommendationEntity> publisher) {
+        return null;
     }
 }

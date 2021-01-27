@@ -1,12 +1,16 @@
 package com.habeebcycle.microservice.composite.product;
 
+import com.habeebcycle.microservice.composite.product.integration.ProductCompositeIntegration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.health.CompositeReactiveHealthContributor;
+import org.springframework.boot.actuate.health.ReactiveHealthContributor;
+import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpMethod;
-import org.springframework.web.client.RestTemplate;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -16,10 +20,15 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @SpringBootApplication
 @ComponentScan("com.habeebcycle")
 public class ProductCompositeServiceApplication {
+
+	@Autowired
+	ProductCompositeIntegration integration;
 
 	@Value("${api.common.version}")           String apiVersion;
 	@Value("${api.common.title}")             String apiTitle;
@@ -54,13 +63,19 @@ public class ProductCompositeServiceApplication {
 				));
 	}
 
-	public static void main(String[] args) {
-		SpringApplication.run(ProductCompositeServiceApplication.class, args);
+	@Bean
+	ReactiveHealthContributor coreServices() {
+		final Map<String, ReactiveHealthIndicator> registry = new LinkedHashMap<>();
+
+		registry.put("product-service", () -> integration.getProductServiceHealth());
+		registry.put("recommendation-service", () -> integration.getRecommendationServiceHealth());
+		registry.put("review-service", () -> integration.getReviewServiceHealth());
+
+		return CompositeReactiveHealthContributor.fromMap(registry);
 	}
 
-	@Bean
-	RestTemplate restTemplate() {
-		return new RestTemplate();
+	public static void main(String[] args) {
+		SpringApplication.run(ProductCompositeServiceApplication.class, args);
 	}
 
 }

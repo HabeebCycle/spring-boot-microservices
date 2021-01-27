@@ -62,10 +62,49 @@ app:
     host: localhost
     port: 7003
 
+spring:
+  # RabbitMQ parameters
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+
+  # Messaging binders for the cloud streaming
+  cloud.stream:
+    # Default binder
+    defaultBinder: rabbit
+    default.contentType: application/json
+    # Bindings
+    bindings:
+      output-products:
+        destination: products
+        producer:
+          required-groups: auditGroup
+      output-recommendations:
+        destination: recommendations
+        producer:
+          required-groups: auditGroup
+      output-reviews:
+        destination: reviews
+        producer:
+          required-groups: auditGroup
+    # Kafka binder broker (zookeeper) host & port
+    kafka.binder:
+      brokers: 127.0.0.1       # Kafka host
+      defaultBrokerPort: 9092  # Kafka port
+
+# Logging settings
 logging:
   level:
     root: INFO
     com.habeebcycle: DEBUG
+
+# Actuator endpoints
+management.endpoints:
+  health.show-details: "ALWAYS"
+  web.exposure.include: "*"   # Lock this up in production
+
 
 ---
 spring:
@@ -73,6 +112,8 @@ spring:
     activate:
       on-profile:
         - docker
+  rabbitmq.host: rabbitmq
+  cloud.stream.kafka.binder.brokers: kafka
 
 server:
   port: 8080

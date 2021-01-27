@@ -2,42 +2,36 @@ package com.habeebcycle.microservice.library.api.core.review;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
 
 public interface ReviewService {
 
     /**
+     * This still use non-blocking synchronous HTTP call
+     *
      * Sample usage: curl $HOST:$PORT/review?productId=1
      *
      * @param productId - The id of the product
      * @return The list of reviews for the particular product or empty list
      */
     @GetMapping(value = "/review", produces = MediaType.APPLICATION_JSON_VALUE)
-    List<Review> getReviews(@RequestParam(value = "productId", required = true) int productId);
+    Flux<Review> getReviews(@RequestParam(value = "productId", required = true) int productId);
 
     /**
-     * Sample usage:
-     *
-     * curl -X POST $HOST:$PORT/review \
-     *   -H "Content-Type: application/json" --data \
-     *   '{"productId":123,"reviewId":456,"author":"me","subject":"yada, yada, yada","content":"yada, yada, yada"}'
-     *
-     * @param review - The JSON body of the review
-     * @return The newly created review
+     * This will be called by event-driven mechanism. Once their is a message
+     * on the queue topic to create a review, it will be triggered by that event
+     * to save it into the database.
+     * @param review - The JSON review in the message queue.
+     * @return the created recommendation
      */
-    @PostMapping(value    = "/review",
-            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     Review createReview(@RequestBody Review review);
 
     /**
-     * Sample usage:
-     *
-     * curl -X DELETE $HOST:$PORT/review?productId=1
-     *
-     * @param productId - The id of the product whose reviews are to be deleted
+     * This will be called by event-driven mechanism. Once their is a message
+     * on the queue topic to delete a review, it will be triggered by that event
+     * and use the productId to delete the particular review from its database.
+     * @param productId - The productId in the message queue.
      */
-    @DeleteMapping(value = "/review")
     void deleteReviews(@RequestParam(value = "productId", required = true)  int productId);
 
     /*
