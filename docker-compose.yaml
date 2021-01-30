@@ -1,13 +1,15 @@
 version: '2.1'
 
 services:
+  # To be able to scale a container up or down, comment out the container name line.
+
   product-service:
     #image: product-service:05-reactive-event-driven
     build: microservices/product-service
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-    container_name: product-service
+    #container_name: product-service
     depends_on:
       mongodb:
         condition: service_healthy
@@ -20,7 +22,7 @@ services:
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-    container_name: recommendation-service
+    #container_name: recommendation-service
     depends_on:
       redis:
         condition: service_healthy
@@ -33,7 +35,7 @@ services:
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-    container_name: review-service
+    #container_name: review-service
     depends_on:
       mysql:
         condition: service_healthy
@@ -48,10 +50,18 @@ services:
     - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-    container_name: product-composite-service
+    #container_name: product-composite-service
     depends_on:
       rabbitmq:
         condition: service_healthy
+
+  # Discovery Server
+  discovery-server:
+    build: cloud-services/discovery-server
+    mem_limit: 300m
+    ports:
+    - "8761:8761"
+    #container_name: discovery-server
 
   # mongodb cli:
   # $ docker-compose exec mongodb mongo --quiet

@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"spring.redis.password="}
+		properties = {"spring.redis.password=", "eureka.client.enabled=false"}
 )
 class RecommendationServiceApplicationTests {
 

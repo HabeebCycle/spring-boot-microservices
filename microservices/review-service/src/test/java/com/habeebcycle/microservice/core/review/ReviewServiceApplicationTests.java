@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"spring.datasource.url=jdbc:h2:mem:review-db"}
+		properties = {"spring.datasource.url=jdbc:h2:mem:review-db",
+		"logging.level.com.habeebcycle=DEBUG",
+		"eureka.client.enabled=false"}
 )
 class ReviewServiceApplicationTests {
 
@@ -99,9 +101,7 @@ class ReviewServiceApplicationTests {
 		int productId = -101;
 		int reviewId = 1;
 
-		assertThrows(MessagingException.class, () -> {
-			sendCreateReviewEvent(productId, reviewId);
-		});
+		assertThrows(MessagingException.class, () -> sendCreateReviewEvent(productId, reviewId));
 
 		try {
 			sendCreateReviewEvent(productId, reviewId);

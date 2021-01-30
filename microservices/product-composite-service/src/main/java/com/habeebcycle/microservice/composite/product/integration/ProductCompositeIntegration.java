@@ -37,30 +37,38 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
     private static final Logger LOG = LoggerFactory.getLogger(ProductCompositeIntegration.class);
     private static final String ACTUATOR_URL = "/actuator/health";
 
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
     private final ObjectMapper mapper;
 
+    // Use the instances name got from the discovery server
     private final String productServiceUrl;
     private final String recommendationServiceUrl;
     private final String reviewServiceUrl;
 
-    private MessageSources messageSources;
+    private final MessageSources messageSources;
+
+    private WebClient webClient;
 
     @Autowired
-    public ProductCompositeIntegration(WebClient.Builder webClient, ObjectMapper mapper, MessageSources messageSources,
-                                       @Value("${app.product-service.host}") String productServiceHost,
-                                       @Value("${app.product-service.port}") String productServicePort,
-                                       @Value("${app.recommendation-service.host}") String recommendationServiceHost,
-                                       @Value("${app.recommendation-service.port}") String recommendationServicePort,
-                                       @Value("${app.review-service.host}") String reviewServiceHost,
-                                       @Value("${app.review-service.port}") String reviewServicePort) {
+    public ProductCompositeIntegration(WebClient.Builder webClientBuilder, ObjectMapper mapper, MessageSources messageSources,
+                                       @Value("${app.product-service.url}") String productServiceUrl,
+                                       @Value("${app.recommendation-service.url}") String recommendationServiceUrl,
+                                       @Value("${app.review-service.url}") String reviewServiceUrl) {
 
-        this.webClient = webClient.build();
+        this.webClientBuilder = webClientBuilder;
         this.mapper = mapper;
         this.messageSources = messageSources;
-        this.productServiceUrl = "http://" + productServiceHost + ":" + productServicePort;
-        this.recommendationServiceUrl = "http://" + recommendationServiceHost + ":" + recommendationServicePort;
-        this.reviewServiceUrl = "http://" + reviewServiceHost + ":" + reviewServicePort;
+        this.productServiceUrl = productServiceUrl;
+        this.recommendationServiceUrl = recommendationServiceUrl;
+        this.reviewServiceUrl = reviewServiceUrl;
+    }
+
+    private WebClient getWebClient() {
+        if (webClient == null) {
+            webClient = webClientBuilder.build();
+        }
+
+        return webClient;
     }
 
     @Override
@@ -69,7 +77,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         String url = productServiceUrl + "/product/" + productId;
         LOG.debug("Will call getProduct API on URL: {}", url);
 
-        return webClient.get()
+        return getWebClient().get()
                 .uri(url)
                 .retrieve()
                 .bodyToMono(Product.class)
@@ -126,7 +134,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         LOG.debug("Will call getRecommendations API on URL: {}", url);
 
         // Return an empty result if something goes wrong to make it possible for the composite service to return partial responses
-        return webClient.get()
+        return getWebClient().get()
                 .uri(url)
                 .retrieve()
                 .bodyToFlux(Recommendation.class)
@@ -168,7 +176,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         LOG.debug("Will call getReviews API on URL: {}", url);
 
         // Return an empty result if something goes wrong to make it possible for the composite service to return partial responses
-        return webClient.get()
+        return getWebClient().get()
                 .uri(url)
                 .retrieve()
                 .bodyToFlux(Review.class)
@@ -243,7 +251,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         url += ACTUATOR_URL;
         LOG.info("Will call the Health API on URL: {}", url);
 
-        return webClient.get()
+        return getWebClient().get()
                 .uri(url)
                 .retrieve()
                 .bodyToMono(String.class)

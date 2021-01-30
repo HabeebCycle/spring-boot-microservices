@@ -64,6 +64,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Cloud services -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+
 		<!-- Application Libraries -->
 		<dependency>
 			<groupId>com.habeebcycle.microservice.library</groupId>

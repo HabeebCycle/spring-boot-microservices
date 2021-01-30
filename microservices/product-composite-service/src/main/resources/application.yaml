@@ -49,20 +49,39 @@ server:
   error:
     include-message: always
 
-app:
+service:
+  discovery-server:
+    host: localhost
+    port: 8761
+
+# Discovery server configuration
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${service.discovery-server.host}:${service.discovery-server.port}/eureka/
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
+  instance:
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
+# Ribbon for load balancing
+ribbon:
+  ServerListRefreshInterval: 5000
+  NFLoadBalancerPingInterval: 5
+
+# We will get these from the discovery server
+app: # We are using service discovery
   product-service:
-    host: localhost
-    port: 7001
-
+    url: http://product-service
   recommendation-service:
-    host: localhost
-    port: 7002
-
+    url: http://recommendation-service
   review-service:
-    host: localhost
-    port: 7003
+    url: http://review-service
 
 spring:
+  application:
+    name: product-composite-service
+
   # RabbitMQ parameters
   rabbitmq:
     host: 127.0.0.1
@@ -118,15 +137,6 @@ spring:
 server:
   port: 8080
 
-app:
-  product-service:
-    host: product-service
-    port: 8080
-
-  recommendation-service:
-    host: recommendation-service
-    port: 8080
-
-  review-service:
-    host: review-service
-    port: 8080
+service:
+  discovery-server:
+    host: discovery-server

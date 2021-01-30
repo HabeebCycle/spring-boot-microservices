@@ -39,6 +39,7 @@
         <module>microservices/product-service</module>
         <module>microservices/recommendation-service</module>
         <module>microservices/review-service</module>
+        <module>cloud-services/discovery-server</module>
     </modules>
 
 </project>

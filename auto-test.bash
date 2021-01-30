@@ -6,7 +6,7 @@
 #
 # Sample usage:
 #
-#   HOST=localhost PORT=7000 ./auto-test.bash
+#   HOST=localhost PORT=7000 ./auto-test.bash start stop
 #
 : ${HOST=localhost}
 : ${PORT=8080}

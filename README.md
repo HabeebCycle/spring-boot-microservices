@@ -107,3 +107,16 @@ docker-compose down
 unset COMPOSE_FILE
 ```
 For any issue with docker-compose, run `rm ~/.docker/config.json`
+
+
+### 6. Discovery Server using Netflix Eureka
+Discovery server runs on port 8761
+Disable the eureka server in all the tests
+#### Scaling up or down
+```shell
+#After docker-compose up -d, run
+docker-compose up -d --scale <service-name>=<number_of_instances>
+#Example
+docker-compose up -d --scale review-service=2 --scale recommendation-service=3 --scale product-service=2
+docker-compose up -d --no-deps --scale product-service=3 --no-recreate product-service
+```

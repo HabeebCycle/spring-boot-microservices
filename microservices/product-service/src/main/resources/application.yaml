@@ -3,7 +3,27 @@ server:
   error:
     include-message: always
 
+service:
+  discovery-server:
+    host: localhost
+    port: 8761
+
+# Discovery server configuration
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${service.discovery-server.host}:${service.discovery-server.port}/eureka/
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
+  instance:
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
+
 spring:
+  application:
+    name: product-service
+
+  # MongoDB Config
   data.mongodb:
     host: localhost
     port: 27017
@@ -66,3 +86,7 @@ spring:
 
 server:
   port: 8080
+
+service:
+  discovery-server:
+    host: discovery-server

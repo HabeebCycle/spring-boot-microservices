@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"spring.data.mongodb.port:0"}
+		properties = {"spring.data.mongodb.port:0", "eureka.client.enabled=false"}
 )
 class ProductServiceApplicationTests {
 
@@ -48,12 +48,12 @@ class ProductServiceApplicationTests {
 		int productId = 1;
 
 		assertNull(repository.findByProductId(productId).block());
-		assertEquals(0, repository.count().block().longValue());
+		assertEquals(0, repository.count().block());
 
 		assertTrue(sendCreateProductEvent(productId));
 
 		assertNotNull(repository.findByProductId(productId).block());
-		assertEquals(1, repository.count().block().longValue());
+		assertEquals(1, repository.count().block());
 
 		getAndVerifyProduct(productId, HttpStatus.OK)
 				.jsonPath("$.productId").isEqualTo(productId);

@@ -124,6 +124,14 @@ services:
     depends_on:
       - kafka
 
+  # Discovery Server
+  discovery-server:
+    build: cloud-services/discovery-server
+    mem_limit: 300m
+    ports:
+      - "8761:8761"
+    container_name: discovery-server
+
   # mongodb cli:
   # $ docker-compose exec mongodb mongo --quiet
   mongodb:
