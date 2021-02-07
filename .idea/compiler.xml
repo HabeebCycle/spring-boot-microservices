@@ -11,6 +11,7 @@
         <module name="util" />
         <module name="review-service" />
         <module name="product-composite-service" />
+        <module name="api-gateway" />
         <module name="product-service" />
         <module name="api" />
         <module name="recommendation-service" />
@@ -20,6 +21,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="api" options="-parameters" />
+      <module name="api-gateway" options="-parameters" />
       <module name="discovery-server" options="-parameters" />
       <module name="product-composite-service" options="-parameters" />
       <module name="product-service" options="-parameters" />

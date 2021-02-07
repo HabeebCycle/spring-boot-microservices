@@ -21,3 +21,13 @@ eureka:
 
 # Actuator endpoints
 management.endpoints.web.exposure.include: "*"
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - kubernetes
+
+#Enable liveness and readiness probes
+management.health.probes.enabled: true

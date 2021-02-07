@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.health.Health;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -35,7 +34,6 @@ import java.io.IOException;
 public class ProductCompositeIntegration implements ProductService, RecommendationService, ReviewService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductCompositeIntegration.class);
-    private static final String ACTUATOR_URL = "/actuator/health";
 
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper mapper;
@@ -232,31 +230,4 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         }
     }
 
-    // Actuator methods to get health statuses of the services
-
-    public Mono<Health> getProductServiceHealth() {
-        return getHealth(productServiceUrl);
-    }
-
-    public Mono<Health> getRecommendationServiceHealth() {
-        return getHealth(recommendationServiceUrl);
-    }
-
-    public Mono<Health> getReviewServiceHealth() {
-        return getHealth(reviewServiceUrl);
-    }
-
-    // Utility Method for calling service health status
-    private Mono<Health> getHealth(String url) {
-        url += ACTUATOR_URL;
-        LOG.info("Will call the Health API on URL: {}", url);
-
-        return getWebClient().get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(s -> new Health.Builder().up().build())
-                .onErrorResume(ex -> Mono.just(new Health.Builder().down(ex).build()))
-                .log();
-    }
 }

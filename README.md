@@ -120,3 +120,10 @@ docker-compose up -d --scale <service-name>=<number_of_instances>
 docker-compose up -d --scale review-service=2 --scale recommendation-service=3 --scale product-service=2
 docker-compose up -d --no-deps --scale product-service=3 --no-recreate product-service
 ```
+
+### 7. API Gateway Using the Spring Cloud Gateway
+All the microservices will be run in the backend, while api-gateway 
+will be used to expose only the product-composite-service and the discovery-server.
+
+Available predicates and filters for a route is available at
+https://cloud.spring.io/spring-cloud-gateway/reference/html/

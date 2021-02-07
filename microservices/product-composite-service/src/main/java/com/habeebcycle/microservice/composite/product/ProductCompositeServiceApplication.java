@@ -4,9 +4,6 @@ import com.habeebcycle.microservice.composite.product.integration.ProductComposi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.actuate.health.CompositeReactiveHealthContributor;
-import org.springframework.boot.actuate.health.ReactiveHealthContributor;
-import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +19,6 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @SpringBootApplication
 @ComponentScan("com.habeebcycle")
@@ -65,22 +60,11 @@ public class ProductCompositeServiceApplication {
 				));
 	}
 
-	@Bean
-	ReactiveHealthContributor coreServices() {
-		final Map<String, ReactiveHealthIndicator> registry = new LinkedHashMap<>();
-
-		registry.put("product-service", () -> integration.getProductServiceHealth());
-		registry.put("recommendation-service", () -> integration.getRecommendationServiceHealth());
-		registry.put("review-service", () -> integration.getReviewServiceHealth());
-
-		return CompositeReactiveHealthContributor.fromMap(registry);
-	}
-
 	public static void main(String[] args) {
 		SpringApplication.run(ProductCompositeServiceApplication.class, args);
 	}
 
-	// Configure the webclient to load balance. It call the instances in a round robin version
+	// Configure the webclient to load balance. It calls the instances in a round robin version
 	@Bean
 	@LoadBalanced
 	public WebClient.Builder loadBalancedWebClientBuilder() {

@@ -107,8 +107,9 @@ services:
     #image: product-composite-service:05-reactive-event-driven
     build: microservices/product-composite-service
     mem_limit: 300m
-    ports:
-      - "8080:8080"
+    # Removing external access by disabling the port. It will be accessed through API-Gateway
+    #ports:
+    #- "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - MANAGEMENT_HEALTH_RABBIT_ENABLED=false
@@ -128,9 +129,20 @@ services:
   discovery-server:
     build: cloud-services/discovery-server
     mem_limit: 300m
-    ports:
-      - "8761:8761"
+    # Removing external access by disabling the port. It will be accessed through API-Gateway
+    #ports:
+    #- "8761:8761"
     container_name: discovery-server
+
+  # API Gateway server
+  api-gateway:
+    build: cloud-services/api-gateway
+    mem_limit: 300m
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    #container_name: api-gateway
 
   # mongodb cli:
   # $ docker-compose exec mongodb mongo --quiet

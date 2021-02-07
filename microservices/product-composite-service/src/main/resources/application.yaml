@@ -140,3 +140,22 @@ server:
 service:
   discovery-server:
     host: discovery-server
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - kubernetes
+  rabbitmq.host: rabbitmq
+  cloud.stream.kafka.binder.brokers: kafka
+
+#Enable liveness and readiness probes
+management.health.probes.enabled: true
+
+service:
+  discovery-server:
+    host: discovery-server
+
+server:
+  port: 8080
