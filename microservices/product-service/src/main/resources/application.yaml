@@ -7,12 +7,14 @@ service:
   discovery-server:
     host: localhost
     port: 8761
+    username: u
+    password: p
 
 # Discovery server configuration
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://${service.discovery-server.host}:${service.discovery-server.port}/eureka/
+      defaultZone: http://${service.discovery-server.username}:${service.discovery-server.password}@${service.discovery-server.host}:${service.discovery-server.port}/eureka/
     initialInstanceInfoReplicationIntervalSeconds: 5
     registryFetchIntervalSeconds: 5
   instance:

@@ -53,12 +53,19 @@ service:
   discovery-server:
     host: localhost
     port: 8761
+    username: u
+    password: p
+  auth-server:
+    host: localhost
+    port: 9999
+  auth0:
+    domain: dev-habeebcycle-m1.auth0.com
 
 # Discovery server configuration
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://${service.discovery-server.host}:${service.discovery-server.port}/eureka/
+      defaultZone: http://${service.discovery-server.username}:${service.discovery-server.password}@${service.discovery-server.host}:${service.discovery-server.port}/eureka/
     initialInstanceInfoReplicationIntervalSeconds: 5
     registryFetchIntervalSeconds: 5
   instance:
@@ -81,6 +88,15 @@ app: # We are using service discovery
 spring:
   application:
     name: product-composite-service
+
+  # OAuth2 Resource security
+
+  # Using the local auth-server in the project
+  #security.oauth2.resourceserver.jwt.jwk-set-uri: http://${service.auth-server.host}:${service.auth-server.port}/.well-known/jwks.json
+
+  # Using the OAuth2 provider domain - Auth0
+  #security.oauth2.resourceserver.jwt.issuer-uri: https://${service.auth0.domain}/
+  security.oauth2.resourceserver.jwt.issuer-uri: https://dev-habeebcycle-m1.auth0.com/
 
   # RabbitMQ parameters
   rabbitmq:
@@ -140,6 +156,8 @@ server:
 service:
   discovery-server:
     host: discovery-server
+  auth-server:
+    host: auth-server
 
 ---
 spring:
@@ -156,6 +174,8 @@ management.health.probes.enabled: true
 service:
   discovery-server:
     host: discovery-server
+  auth-server:
+    host: auth-server
 
 server:
   port: 8080

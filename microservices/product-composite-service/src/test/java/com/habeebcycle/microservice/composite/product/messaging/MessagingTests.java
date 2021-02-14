@@ -1,5 +1,7 @@
 package com.habeebcycle.microservice.composite.product.messaging;
 
+import com.habeebcycle.microservice.composite.product.ProductCompositeServiceApplication;
+import com.habeebcycle.microservice.composite.product.config.TestSecurityConfig;
 import com.habeebcycle.microservice.composite.product.event.IsSameEvent;
 import com.habeebcycle.microservice.library.api.composite.ProductAggregate;
 import com.habeebcycle.microservice.library.api.composite.service.RecommendationSummary;
@@ -28,7 +30,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {"eureka.client.enabled=false"})
+        classes = {ProductCompositeServiceApplication.class, TestSecurityConfig.class},
+        properties = {"spring.main.allow-bean-definition-overriding=true", "eureka.client.enabled=false"})
 public class MessagingTests {
 
     @Autowired

@@ -70,10 +70,18 @@ services:
     build: cloud-services/api-gateway
     mem_limit: 300m
     ports:
-    - "8080:8080"
+    - "8443:8443"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     #container_name: api-gateway
+
+  # API Gateway server
+  auth-server:
+    build: cloud-services/auth-server
+    mem_limit: 300m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    #container_name: auth-server
 
   # mongodb cli:
   # $ docker-compose exec mongodb mongo --quiet

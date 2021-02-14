@@ -51,6 +51,7 @@ public class HealthCheckConfig {
     ReactiveHealthContributor servicesHealthCheck() {
         final Map<String, ReactiveHealthIndicator> registry = new LinkedHashMap<>();
 
+        registry.put("auth-server", () -> getHealth("http://auth-server"));
         registry.put("product-service", () -> getHealth(productServiceUrl));
         registry.put("product-composite-service", () -> getHealth(compositeServiceUrl));
         registry.put("recommendation-service", () -> getHealth(recommendationServiceUrl));

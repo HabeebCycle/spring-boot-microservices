@@ -1,5 +1,6 @@
 package com.habeebcycle.microservice.composite.product;
 
+import com.habeebcycle.microservice.composite.product.config.TestSecurityConfig;
 import com.habeebcycle.microservice.composite.product.integration.ProductCompositeIntegration;
 import com.habeebcycle.microservice.library.api.composite.ProductAggregate;
 import com.habeebcycle.microservice.library.api.composite.service.RecommendationSummary;
@@ -26,7 +27,8 @@ import java.util.Collections;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"eureka.client.enabled=false"})
+		classes = {ProductCompositeServiceApplication.class, TestSecurityConfig.class},
+		properties = {"spring.main.allow-bean-definition-overriding=true", "eureka.client.enabled=false"})
 class ProductCompositeServiceApplicationTests {
 
 	private static final int PRODUCT_ID_OK = 1;

@@ -1,0 +1,53 @@
+server.port: 9999
+
+spring.application.name: auth-server
+
+service:
+  discovery-server:
+    host: localhost
+    port: 8761
+    username: u
+    password: p
+
+# Discovery server configuration
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${service.discovery-server.username}:${service.discovery-server.password}@${service.discovery-server.host}:${service.discovery-server.port}/eureka/
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
+  instance:
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
+
+# Actuator endpoints
+management.endpoints:
+  health.show-details: "ALWAYS"
+  web.exposure.include: "*"   # Lock this up in production
+
+# security.oauth2.authorizationserver.jwt.enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - docker
+
+service:
+  discovery-server:
+    host: discovery-server
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - kubernetes
+
+#Enable liveness and readiness probes
+management.health.probes.enabled: true
+
+service:
+  discovery-server:
+    host: discovery-server

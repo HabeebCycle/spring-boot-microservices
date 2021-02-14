@@ -3,6 +3,7 @@ package com.habeebcycle.microservices.cloud.discoveryserver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
@@ -11,24 +12,18 @@ import org.springframework.http.ResponseEntity;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DiscoveryServerApplicationTests {
 
-	@Autowired
 	private TestRestTemplate testRestTemplate;
 
-    /*@Autowired
-	WebTestClient client;
+    @Value("${eureka.instance.username:u}")
+	private String username;
 
-    @Test
-    void serverLoads() {
-        client.get()
-                .uri("/eureka/apps")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.applications").hasJsonPath()
-                .jsonPath("$.applications.versions__delta").isEqualTo("1")
-                .jsonPath("$.application.apps__hashcode").isEmpty()
-                .jsonPath("$.application.application").isEmpty();
-    }*/
+    @Value("${eureka.instance.password:p}")
+	private String password;
+
+    @Autowired
+	public void setTestRestTemplate(TestRestTemplate testRestTemplate) {
+    	this.testRestTemplate = testRestTemplate.withBasicAuth(username, password);
+	}
 
 	@Test
 	void catalogLoads() {

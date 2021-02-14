@@ -8,6 +8,8 @@ server:
 eureka:
   instance:
     hostname: localhost
+    username: u
+    password: p
   client:
     registerWithEureka: false
     fetchRegistery: false

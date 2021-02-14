@@ -41,6 +41,7 @@
         <module>microservices/review-service</module>
         <module>cloud-services/discovery-server</module>
         <module>cloud-services/api-gateway</module>
+        <module>cloud-services/auth-server</module>
     </modules>
 
 </project>

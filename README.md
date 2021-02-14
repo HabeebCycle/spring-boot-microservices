@@ -106,7 +106,7 @@ docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-s
 docker-compose down
 unset COMPOSE_FILE
 ```
-For any issue with docker-compose, run `rm ~/.docker/config.json`
+For any issue with docker-compose, run `**rm ~/.docker/config.json**`
 
 
 ### 6. Discovery Server using Netflix Eureka
@@ -127,3 +127,27 @@ will be used to expose only the product-composite-service and the discovery-serv
 
 Available predicates and filters for a route is available at
 https://cloud.spring.io/spring-cloud-gateway/reference/html/
+
+
+### 8. API Security with OAuth2 and Open Connect ID
+To use local OAuth2 server, 
+uncomment line 95 and comment line 99 in application.yaml of product-composite-service
+uncomment line 56 and comment line 60 in application.yaml of api-gateway
+
+To use OAuth2 OIDC provider,
+comment line 95 and uncomment line 99 in application.yaml of product-composite-service
+comment line 56 and uncomment line 60 in application.yaml of api-gateway
+and replace the `security.oauth2.resourceserver.jwt.issuer-uri` with your provider domain url
+##### https implementation
+```shell
+keytool -genkeypair -alias localhost -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore edge.p12 -validity 3650
+```
+
+```shell
+#Password Grant Type
+curl -k https://${client_id}:${client_secret}@localhost:8443/oauth/token -d grant_type=password -d useername=${username} -d password=${password} -s | jq .
+
+#Implicit Grant 
+https://localhost:8443/oauth/authorize?response_type=token&client_id=reader&redirect_uri=http://my.redirect.uri&scope=product:read&state=48532
+
+```

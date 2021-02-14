@@ -49,6 +49,20 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Resource server Security -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-resource-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-jose</artifactId>
+		</dependency>
+
 		<!-- Cloud Streaming Dependencies -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
