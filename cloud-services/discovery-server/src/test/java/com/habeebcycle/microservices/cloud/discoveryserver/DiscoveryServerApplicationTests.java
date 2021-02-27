@@ -9,15 +9,16 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+				properties = {"spring.cloud.config.enabled=false"})
 class DiscoveryServerApplicationTests {
 
 	private TestRestTemplate testRestTemplate;
 
-    @Value("${eureka.instance.username:u}")
+    @Value("${service.discovery-server.username}")
 	private String username;
 
-    @Value("${eureka.instance.password:p}")
+    @Value("${service.discovery-server.password}")
 	private String password;
 
     @Autowired

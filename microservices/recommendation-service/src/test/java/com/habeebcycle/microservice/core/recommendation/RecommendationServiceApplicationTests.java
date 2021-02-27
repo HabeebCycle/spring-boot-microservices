@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"spring.redis.password=", "eureka.client.enabled=false"}
+		properties = {"spring.redis.password=", "eureka.client.enabled=false", "spring.cloud.config.enabled=false"}
 )
 class RecommendationServiceApplicationTests {
 
@@ -121,6 +121,7 @@ class RecommendationServiceApplicationTests {
 
 		getAndVerifyRecommendationsByProductId("", HttpStatus.BAD_REQUEST)
 				.jsonPath("$.path").isEqualTo("/recommendation")
+				.jsonPath("$.status").isEqualTo(400)
 				.jsonPath("$.message").isEqualTo("Required int parameter 'productId' is not present");
 	}
 
@@ -136,6 +137,7 @@ class RecommendationServiceApplicationTests {
 
 		getAndVerifyRecommendationsByProductId("?productId=no-integer", HttpStatus.BAD_REQUEST)
 				.jsonPath("$.path").isEqualTo("/recommendation")
+				.jsonPath("$.status").isEqualTo(400)
 				.jsonPath("$.message").isEqualTo("Type mismatch.");
 	}
 

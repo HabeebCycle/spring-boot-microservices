@@ -31,19 +31,22 @@ public class HealthCheckConfig {
     private final String productServiceUrl;
     private final String recommendationServiceUrl;
     private final String reviewServiceUrl;
+    private final String authServiceUrl;
 
     @Autowired
     public HealthCheckConfig(WebClient.Builder webClientBuilder,
                              @Value("${app.composite-service.url}") String compositeServiceUrl,
                              @Value("${app.product-service.url}") String productServiceUrl,
                              @Value("${app.recommendation-service.url}") String recommendationServiceUrl,
-                             @Value("${app.review-service.url}") String reviewServiceUrl) {
+                             @Value("${app.review-service.url}") String reviewServiceUrl,
+                             @Value("${app.auth-server.url}") String authServiceUrl) {
 
         this.webClientBuilder = webClientBuilder;
         this.compositeServiceUrl = compositeServiceUrl;
         this.productServiceUrl = productServiceUrl;
         this.recommendationServiceUrl = recommendationServiceUrl;
         this.reviewServiceUrl = reviewServiceUrl;
+        this.authServiceUrl = authServiceUrl;
     }
 
 
@@ -51,7 +54,7 @@ public class HealthCheckConfig {
     ReactiveHealthContributor servicesHealthCheck() {
         final Map<String, ReactiveHealthIndicator> registry = new LinkedHashMap<>();
 
-        registry.put("auth-server", () -> getHealth("http://auth-server"));
+        registry.put("auth-server", () -> getHealth(authServiceUrl));
         registry.put("product-service", () -> getHealth(productServiceUrl));
         registry.put("product-composite-service", () -> getHealth(compositeServiceUrl));
         registry.put("recommendation-service", () -> getHealth(recommendationServiceUrl));

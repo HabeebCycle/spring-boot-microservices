@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"spring.data.mongodb.port:0", "eureka.client.enabled=false"}
+		properties = {"spring.data.mongodb.port:0", "eureka.client.enabled=false", "spring.cloud.config.enabled=false"}
 )
 class ProductServiceApplicationTests {
 
@@ -102,6 +102,7 @@ class ProductServiceApplicationTests {
 
 		getAndVerifyProduct("/no-integer", HttpStatus.BAD_REQUEST)
 				.jsonPath("$.path").isEqualTo("/product/no-integer")
+				.jsonPath("$.status").isEqualTo(400)
 				.jsonPath("$.message").isEqualTo("Type mismatch.");
 	}
 

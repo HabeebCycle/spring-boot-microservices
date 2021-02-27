@@ -151,3 +151,18 @@ curl -k https://${client_id}:${client_secret}@localhost:8443/oauth/token -d gran
 https://localhost:8443/oauth/authorize?response_type=token&client_id=reader&redirect_uri=http://my.redirect.uri&scope=product:read&state=48532
 
 ```
+
+### 9. API Configuration Server with spring cloud config
+TO ENCRYPT & DECRYPT
+```shell
+curl ${USERNAME}:${PASSWORD}@localhost:8888/encrypt -d mysecret
+3346a217477f196d9dacbcd6cd27e130b00c12b6ae6daf5bfd045fd0f10f98e6
+curl ${USERNAME}:${PASSWORD}@localhost:8888/encrypt --data-urlencode "hello word"
+64b5d641db3acb9bedcd221ae9363901aadeb8c03bdd2a8281f5095d1c86928a
+curl ${USERNAME}:${PASSWORD}@localhost:8888/decrypt -d 64b5d641db3acb9bedcd221ae9363901aadeb8c03bdd2a8281f5095d1c86928a
+hello word
+```
+Getting service properties & profiles configurations
+```shell
+curl -k https://user:root@localhost:8443/config/product-composite/docker -ks | jq
+```

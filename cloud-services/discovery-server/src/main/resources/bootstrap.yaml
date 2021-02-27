@@ -1,0 +1,41 @@
+service:
+  config-server:
+    host: localhost
+    port: 8888
+
+spring:
+  application:
+    name: discovery-server
+  # Config sever configurations
+  cloud.config:
+    username: ${CONFIG_SERVER_USER:user} # Default value user for testing
+    password: ${CONFIG_SERVER_PWD:root}  # Default value root for testing
+    failFast: true
+    retry:
+      initialInterval: 3000
+      multiplier: 1.3
+      maxInterval: 10000
+      maxAttempts: 20
+    uri: http://${service.config-server.host}:${service.config-server.port}
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - docker
+
+service:
+  config-server:
+    host: config-server
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - kubernetes
+
+service:
+  config-server:
+    host: config-server

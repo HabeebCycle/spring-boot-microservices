@@ -10,7 +10,7 @@ import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataMongoTest
+@DataMongoTest(properties = {"spring.cloud.config.enabled=false"})
 public class PersistenceTests {
 
     @Autowired
@@ -94,6 +94,8 @@ public class PersistenceTests {
         ProductEntity entity1 = repository.findById(savedEntity.getId()).block();
         ProductEntity entity2 = repository.findById(savedEntity.getId()).block();
 
+        assertNotNull(entity1);
+        assertNotNull(entity2);
         // Update the entity using the first entity object
         entity1.setName("n1");
         repository.save(entity1).block();

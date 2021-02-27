@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"eureka.client.enabled=false"}
+		properties = {"eureka.client.enabled=false", "spring.cloud.config.enabled=false"}
 )
 @AutoConfigureWebTestClient(timeout = "36000")
 class ApiGatewayApplicationTests {

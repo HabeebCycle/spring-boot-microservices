@@ -1,0 +1,11 @@
+server.error.include-message: always
+
+spring:
+  application:
+    name: recommendation-service-test
+
+  # Redis configuration
+  redis:
+    host: localhost
+    port: 6379
+

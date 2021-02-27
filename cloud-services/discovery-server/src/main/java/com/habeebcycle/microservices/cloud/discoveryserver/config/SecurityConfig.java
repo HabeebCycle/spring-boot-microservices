@@ -13,8 +13,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final String username;
     private final String password;
 
-    public SecurityConfig(@Value("${eureka.instance.username}") String username,
-                          @Value("${eureka.instance.password}") String password) {
+    public SecurityConfig(@Value("${service.discovery-server.username}") String username,
+                          @Value("${service.discovery-server.password}") String password) {
         this.username = username;
         this.password = password;
     }

@@ -17,6 +17,9 @@ service:
   auth-server:
     host: localhost
     port: 9999
+  config-server:
+    host: localhost
+    port: 8888
   auth0:
     domain: dev-habeebcycle-m1.auth0.com
 
@@ -90,6 +93,12 @@ spring:
           uri: http://${service.discovery-server.host}:${service.discovery-server.port}
           predicates:
             - Path=/eureka/**
+        - id: config-server
+          uri: http://${service.config-server.host}:${service.config-server.port}
+          predicates:
+            - Path=/config/**
+          filters:
+            - RewritePath=/config/(?<segment>.*), /$\{segment}
 
         # Testing some routes
         - id: host_route_200

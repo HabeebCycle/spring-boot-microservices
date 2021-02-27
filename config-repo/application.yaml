@@ -1,0 +1,80 @@
+service:
+  discovery-server:
+    host: localhost
+    port: 8761
+    username: u
+    # Using the cloud-config endpoint /encrypt for encryption and /decrypt for decryption
+    password: '{cipher}c28de690167fcf83bea2edb778f7e18439969ce75cec389248ef6bf88fcd04e2'
+  auth-server:
+    host: localhost
+    port: 9999
+  auth0:
+    domain: dev-habeebcycle-m1.auth0.com
+
+# Discovery server configuration
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${service.discovery-server.username}:${service.discovery-server.password}@${service.discovery-server.host}:${service.discovery-server.port}/eureka/
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
+  instance:
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
+# Ribbon for load balancing
+ribbon:
+  ServerListRefreshInterval: 5000
+  NFLoadBalancerPingInterval: 5
+
+spring:
+  # RabbitMQ parameters
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: '{cipher}9e6db49fb0188cc6f9b66075b76b02f70758a9809f0746085293130b01071279'
+
+  # Kafka binder broker (zookeeper) host & port
+  cloud.stream.kafka.binder:
+    brokers: 127.0.0.1       # Kafka host
+    defaultBrokerPort: 9092  # Kafka port
+
+# Actuator endpoints
+management.endpoints:
+  health.show-details: "ALWAYS"
+  web.exposure.include: "*"   # Lock this up in production
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - docker
+  rabbitmq.host: rabbitmq
+  cloud.stream.kafka.binder.brokers: kafka
+
+service:
+  discovery-server:
+    host: discovery-server
+  auth-server:
+    host: auth-server
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - kubernetes
+  rabbitmq.host: rabbitmq
+  cloud.stream.kafka.binder.brokers: kafka
+
+
+#Enable liveness and readiness probes
+management.health.probes.enabled: true
+
+service:
+  discovery-server:
+    host: discovery-server
+  auth-server:
+    host: auth-server

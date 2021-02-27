@@ -21,9 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"spring.datasource.url=jdbc:h2:mem:review-db",
-		"logging.level.com.habeebcycle=DEBUG",
-		"eureka.client.enabled=false"}
+		properties = {"spring.datasource.url=jdbc:h2:mem:review-db", "logging.level.com.habeebcycle=DEBUG",
+		"eureka.client.enabled=false", "spring.cloud.config.enabled=false"}
 )
 class ReviewServiceApplicationTests {
 
@@ -138,6 +137,7 @@ class ReviewServiceApplicationTests {
 
 		getAndVerifyReviewsByProductId("", HttpStatus.BAD_REQUEST)
 				.jsonPath("$.path").isEqualTo("/review")
+				.jsonPath("$.status").isEqualTo(400)
 				.jsonPath("$.message").isEqualTo("Required int parameter 'productId' is not present");
 	}
 
@@ -146,6 +146,7 @@ class ReviewServiceApplicationTests {
 
 		getAndVerifyReviewsByProductId("?productId=no-integer", HttpStatus.BAD_REQUEST)
 				.jsonPath("$.path").isEqualTo("/review")
+				.jsonPath("$.status").isEqualTo(400)
 				.jsonPath("$.message").isEqualTo("Type mismatch.");
 	}
 

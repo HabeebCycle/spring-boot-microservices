@@ -9,6 +9,8 @@ services:
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     #container_name: product-service
     depends_on:
       mongodb:
@@ -22,6 +24,8 @@ services:
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     #container_name: recommendation-service
     depends_on:
       redis:
@@ -35,6 +39,8 @@ services:
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     #container_name: review-service
     depends_on:
       mysql:
@@ -51,6 +57,8 @@ services:
     #- "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     #container_name: product-composite-service
     depends_on:
       rabbitmq:
@@ -60,6 +68,10 @@ services:
   discovery-server:
     build: cloud-services/discovery-server
     mem_limit: 300m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     # Removing external access by disabling the port. It will be accessed through API-Gateway
     #ports:
     #- "8761:8761"
@@ -73,15 +85,31 @@ services:
     - "8443:8443"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     #container_name: api-gateway
 
-  # API Gateway server
+  # API Auth server
   auth-server:
     build: cloud-services/auth-server
     mem_limit: 300m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     #container_name: auth-server
+
+  # API Configuration server
+  config-server:
+    build: cloud-services/config-server
+    mem_limit: 300m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,native
+      - ENCRYPT_KEY=${CONFIG_SERVER_ENCRYPT_KEY}
+      - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
+      - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
+    volumes:
+    - $PWD/config-repo:/config-repo
 
   # mongodb cli:
   # $ docker-compose exec mongodb mongo --quiet

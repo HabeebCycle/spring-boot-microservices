@@ -1,0 +1,37 @@
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri: .
+
+app.product-service.url:
+app.recommendation-service.url:
+app.review-service.url:
+app.composite-service.url:
+app.auth-server.url:
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: host_route_200
+          uri: http://httpstat.us
+          predicates:
+            - Host=i.feel.lucky:8080
+            - Path=/headerrouting/**
+          filters:
+            - SetPath=/200
+        - id: host_route_418
+          uri: http://httpstat.us
+          predicates:
+            - Host=im.a.teapot:8080
+            - Path=/headerrouting/**
+          filters:
+            - SetPath=/418
+        - id: host_route_501
+          uri: http://httpstat.us
+          predicates:
+            - Path=/headerrouting/**
+          filters:
+            - SetPath=/501
+
+# Actuator endpoints
+management.endpoints:
+  health.show-details: "ALWAYS"
+  web.exposure.include: "*"   # Lock this up in production

@@ -13,7 +13,7 @@ public class SecurityConfig {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
-    SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) throws Exception {
+    SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         LOG.info("Security Configuration...");
         http
                 .csrf().disable()
@@ -22,6 +22,7 @@ public class SecurityConfig {
                 .pathMatchers("/actuator/**").permitAll()
                 .pathMatchers("/eureka/**").permitAll()
                 .pathMatchers("/oauth/**").permitAll()
+                .pathMatchers("/config/**").permitAll()
                 .anyExchange().authenticated()
                 .and()
                 .oauth2ResourceServer()

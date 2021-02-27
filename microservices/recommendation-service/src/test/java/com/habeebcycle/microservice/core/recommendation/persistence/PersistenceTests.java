@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataRedisTest(properties = {"spring.redis.password="})
+@DataRedisTest(properties = {"spring.redis.password=", "spring.cloud.config.enabled=false"})
 public class PersistenceTests {
 
     @Autowired
@@ -156,9 +156,7 @@ public class PersistenceTests {
     @Test
     void duplicateErrorTest() {
         RecommendationEntity entity = new RecommendationEntity(1, 2, "a", 3, "c");
-        assertThrows(DuplicateKeyException.class, () -> {
-            repository.save(entity).block();
-        });
+        assertThrows(DuplicateKeyException.class, () -> repository.save(entity).block());
 
         assertEquals(1, repository.count().block());
     }

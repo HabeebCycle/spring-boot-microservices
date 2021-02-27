@@ -1,0 +1,92 @@
+server:
+  port: 7003
+  error:
+    include-message: always
+
+spring:
+  # JDBC Datasource using MySQL
+  datasource:
+    url: jdbc:mysql://localhost/review-db
+    username: user
+    password: '{cipher}f06431b76c1915e6cdf9af6d7bfac6416fe1e6bb0782a86802083011a7837149'
+    maximum-pool-size: 10
+    hikari.initializationFailTimeout: 60000
+  # Strongly recommended to set this property to "none" in production environment!
+  jpa.hibernate.ddl-auto: update
+
+  # Messaging binders for the cloud streaming
+  cloud.stream:
+    # Default binder
+    defaultBinder: rabbit
+    default.contentType: application/json
+    bindings.input:
+      destination: reviews
+      group: reviewsGroup
+    # Default consumer input binding parameters
+    bindings.input.consumer:
+      maxAttempts: 3
+      backOffInitialInterval: 500
+      backOffMaxInterval: 1000
+      backOffMultiplier: 2.0
+    # RabbitMQ consumer input binding parameters
+    rabbit.bindings.input.consumer:
+      autoBindDlq: true
+      republishToDlq: true
+    # Kafka consumer input binding parameters
+    kafka.bindings.input.consumer:
+      enableDlq: true
+
+# Logging settings
+logging:
+  level:
+    root: INFO
+    com.habeebcycle: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+---
+spring:
+  config.activate.on-profile:
+    - docker
+  datasource.url: jdbc:mysql://mysql/review-db
+
+server.port: 8080
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - kubernetes
+  datasource.url: jdbc:mysql://mysql/review-db
+
+server:
+  port: 8080
+
+---
+spring:
+  config.activate.on-profile:
+    - streaming_partitioned
+  cloud.stream.bindings.input.consumer:
+    partitioned: true
+    instanceCount: 2
+
+---
+spring:
+  config.activate.on-profile:
+    - streaming_instance_0
+  cloud.stream.bindings.input.consumer.instanceIndex: 0
+
+---
+spring:
+  config.activate.on-profile:
+    - streaming_instance_1
+  cloud.stream.bindings.input.consumer.instanceIndex: 1
+
+---
+spring:
+  config.activate.on-profile:
+    - kafka
+  cloud.stream.defaultBinder: kafka
+
+management.health.rabbit.enabled: false
