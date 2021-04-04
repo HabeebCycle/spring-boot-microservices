@@ -9,7 +9,9 @@ import com.habeebcycle.microservice.library.api.composite.service.ServiceAddress
 import com.habeebcycle.microservice.library.api.core.product.Product;
 import com.habeebcycle.microservice.library.api.core.recommendation.Recommendation;
 import com.habeebcycle.microservice.library.api.core.review.Review;
+import com.habeebcycle.microservice.library.util.exceptions.NotFoundException;
 import com.habeebcycle.microservice.library.util.http.ServiceUtil;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +87,7 @@ public class ProductCompositeController implements ProductCompositeService {
     }
 
     @Override
-    public Mono<ProductAggregate> getCompositeProduct(int productId) {
+    public Mono<ProductAggregate> getCompositeProduct(int productId, int delay, int faultPercent) {
         LOG.debug("getCompositeProduct: lookup a product aggregate for productId: {}", productId);
 
         return Mono.zip(
@@ -96,7 +98,8 @@ public class ProductCompositeController implements ProductCompositeService {
                         (List<Review>) values[3],
                         serviceUtil.getServiceAddress()),
                 ReactiveSecurityContextHolder.getContext().defaultIfEmpty(securityContext),
-                integration.getProduct(productId),
+                integration.getProduct(productId, delay, faultPercent)
+                    .onErrorReturn(CallNotPermittedException.class, getProductFallbackValue(productId)),
                 integration.getRecommendations(productId).collectList(),
                 integration.getReviews(productId).collectList())
                 .doOnError(ex -> LOG.warn("getCompositeProduct failed: {}", ex.toString()))
@@ -127,6 +130,19 @@ public class ProductCompositeController implements ProductCompositeService {
             LOG.warn("deleteCompositeProduct failed: {}", re.toString());
             throw re;
         }
+    }
+
+    private Product getProductFallbackValue(int productId) {
+        LOG.warn("Creating a fallback product for productId = {}", productId);
+
+        if (productId == 13) {
+            String errMsg = "Product Id: " + productId + " not found in fallback cache!";
+            LOG.warn(errMsg);
+
+            throw new NotFoundException(errMsg);
+        }
+
+        return new Product(productId, "Fallback product " + productId, productId, serviceUtil.getServiceAddress());
     }
 
     private ProductAggregate createProductAggregate(SecurityContext sc, Product product, List<Recommendation> recommendations,

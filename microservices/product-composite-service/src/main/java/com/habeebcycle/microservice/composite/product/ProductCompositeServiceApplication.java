@@ -1,6 +1,8 @@
 package com.habeebcycle.microservice.composite.product;
 
 import com.habeebcycle.microservice.composite.product.integration.ProductCompositeIntegration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -23,6 +25,8 @@ import java.util.Collections;
 @SpringBootApplication
 @ComponentScan("com.habeebcycle")
 public class ProductCompositeServiceApplication {
+
+	private static final Logger LOG = LoggerFactory.getLogger(ProductCompositeServiceApplication.class);
 
 	@Autowired
 	ProductCompositeIntegration integration;

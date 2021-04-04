@@ -1,0 +1,39 @@
+server.port: 8888
+
+# Default encryption key. Will be replaced by properties from .env file
+encrypt.key: my-very-secure-encrypt-key
+
+spring:
+  application:
+    name: config-server
+
+  profiles.active: native   # Add this to use local repository - Using native.searchLocations: file:${PWD} below
+  # App Security. Default username and password. Will be replaced by properties from .env file
+  security:
+    user:
+      name: user # Config server username. Will be replaced by value from the environment variables
+      password: root  # Config server password. Will be replaced by value from the environment variables
+
+  # Cloud config repo
+  cloud.config.server:
+    # Remote git repo
+    #git.uri: https://github.com/HabeebCycleDevelopment/spring-microservices-config-repo.git
+    # Local git repo
+    native.searchLocations: file:${PWD}/config-repo
+
+# Logging settings
+logging:
+  level:
+    root: INFO
+
+# WARNING: Exposing all management endpoints over http should only be used during development, must be locked down in production!
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - docker
+  cloud.config.server.native.searchLocations: file:/config-repo

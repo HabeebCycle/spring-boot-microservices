@@ -40,9 +40,9 @@ spring:
     defaultBrokerPort: 9092  # Kafka port
 
 # Actuator endpoints
-management.endpoints:
-  health.show-details: "ALWAYS"
-  web.exposure.include: "*"   # Lock this up in production
+management:
+  endpoint.health.show-details: "ALWAYS"
+  endpoints.web.exposure.include: "*"   # Lock this up in production
 
 
 ---

@@ -24,7 +24,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 		classes = {ProductCompositeServiceApplication.class, TestSecurityConfig.class},
@@ -45,7 +46,7 @@ class ProductCompositeServiceApplicationTests {
 	@BeforeEach
 	public void setUp() {
 
-		Mockito.when(compositeIntegration.getProduct(PRODUCT_ID_OK))
+		Mockito.when(compositeIntegration.getProduct(eq(PRODUCT_ID_OK), anyInt(), anyInt()))
 				.thenReturn(Mono.just(new Product(PRODUCT_ID_OK, "mock-name", 1, "mock-address")));
 		Mockito.when(compositeIntegration.getRecommendations(PRODUCT_ID_OK))
 				.thenReturn(Flux.fromIterable(Collections.singletonList(new Recommendation(PRODUCT_ID_OK, 1,
@@ -54,10 +55,10 @@ class ProductCompositeServiceApplicationTests {
 				.thenReturn(Flux.fromIterable(Collections.singletonList(new Review(PRODUCT_ID_OK, 1, "mock-author",
 						"mock-subject", "mock-content", "mock-address"))));
 
-		Mockito.when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND))
+		Mockito.when(compositeIntegration.getProduct(eq(PRODUCT_ID_NOT_FOUND), anyInt(), anyInt()))
 				.thenThrow(new NotFoundException("400 NOT_FOUND: " + PRODUCT_ID_NOT_FOUND));
 
-		Mockito.when(compositeIntegration.getProduct(PRODUCT_ID_INVALID))
+		Mockito.when(compositeIntegration.getProduct(eq(PRODUCT_ID_INVALID), anyInt(), anyInt()))
 				.thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_INVALID));
 	}
 

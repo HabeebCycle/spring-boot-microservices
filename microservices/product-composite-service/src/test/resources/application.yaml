@@ -14,5 +14,6 @@ api:
       email:
 
 app.product-service.url:
+app.product-service.timeout: 2  # For ResilientAPI retry
 app.recommendationservice.url:
 app.review-service.url:
