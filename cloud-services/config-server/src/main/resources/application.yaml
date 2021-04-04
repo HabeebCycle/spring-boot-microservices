@@ -7,19 +7,21 @@ spring:
   application:
     name: config-server
 
-  profiles.active: native   # Add this to use local repository - Using native.searchLocations: file:${PWD} below
-  # App Security. Default username and password. Will be replaced by properties from .env file
+  profiles.active: native  # Add this to use local repository - Using native.searchLocations: file:${PWD} in the config repo properties below
+
+  # App security. Default username and password. Will be replaced by properties from .env file
   security:
     user:
-      name: user # Config server username. Will be replaced by value from the environment variables
+      name: user  # Config server username. Will be replaced by value from the environment variables
       password: root  # Config server password. Will be replaced by value from the environment variables
 
-  # Cloud config repo
+  # Cloud config repo properties
   cloud.config.server:
-    # Remote git repo
+    # Use this for a remote git repo
     #git.uri: https://github.com/HabeebCycleDevelopment/spring-microservices-config-repo.git
-    # Local git repo
-    native.searchLocations: file:${PWD}/config-repo
+
+    # Use this for a local git repo
+    native.searchLocations: file:${PWD}/config-repo  # the repo is within this project
 
 # Logging settings
 logging:
@@ -34,6 +36,5 @@ management.endpoints.web.exposure.include: "*"
 spring:
   config:
     activate:
-      on-profile:
-        - docker
+      - docker
   cloud.config.server.native.searchLocations: file:/config-repo
