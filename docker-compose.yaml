@@ -7,6 +7,8 @@ services:
     #image: product-service:05-reactive-event-driven
     build: microservices/product-service
     mem_limit: 300m
+    networks:
+      - service-network
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
@@ -22,6 +24,8 @@ services:
     #image: recommendation-service:05-reactive-event-driven
     build: microservices/recommendation-service
     mem_limit: 300m
+    networks:
+      - service-network
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
@@ -37,6 +41,8 @@ services:
     #image: review-service:05-reactive-event-driven
     build: microservices/review-service
     mem_limit: 300m
+    networks:
+      - service-network
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
@@ -52,6 +58,8 @@ services:
     #image: product-composite-service:05-reactive-event-driven
     build: microservices/product-composite-service
     mem_limit: 300m
+    networks:
+      - service-network
     # Removing external access by disabling the port. It will be accessed through API-Gateway
     #ports:
     #- "8080:8080"
@@ -68,6 +76,8 @@ services:
   discovery-server:
     build: cloud-services/discovery-server
     mem_limit: 300m
+    networks:
+      - service-network
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
@@ -81,6 +91,8 @@ services:
   api-gateway:
     build: cloud-services/api-gateway
     mem_limit: 300m
+    networks:
+      - service-network
     ports:
     - "8443:8443"
     environment:
@@ -93,6 +105,8 @@ services:
   auth-server:
     build: cloud-services/auth-server
     mem_limit: 300m
+    networks:
+      - service-network
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USR}
@@ -103,6 +117,8 @@ services:
   config-server:
     build: cloud-services/config-server
     mem_limit: 300m
+    networks:
+      - service-network
     environment:
       - SPRING_PROFILES_ACTIVE=docker,native
       - ENCRYPT_KEY=${CONFIG_SERVER_ENCRYPT_KEY}
@@ -116,6 +132,8 @@ services:
   mongodb:
     image: mongo:3.6.9
     mem_limit: 300m
+    networks:
+      - service-network
     ports:
     - "27017:27017"
     container_name: mongodb
@@ -132,6 +150,8 @@ services:
   redis:
     image: redis:alpine
     mem_limit: 300m
+    networks:
+      - service-network
     ports:
     - "6379:6379"
     environment:
@@ -150,6 +170,8 @@ services:
   mysql:
     image: mysql:5.7
     mem_limit: 300m
+    networks:
+      - service-network
     ports:
     - "3306:3306"
     environment:
@@ -170,6 +192,8 @@ services:
   rabbitmq:
     image: rabbitmq:3.8.9-management-alpine
     mem_limit: 300m
+    networks:
+      - service-network
     ports:
     - "5672:5672"
     - "15672:15672"
@@ -184,3 +208,7 @@ services:
       timeout: 5s
       retries: 10
 
+# Container network
+networks:
+  service-network:
+    name: service-network

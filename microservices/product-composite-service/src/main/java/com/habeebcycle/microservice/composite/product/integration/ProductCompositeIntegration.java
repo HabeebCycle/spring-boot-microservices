@@ -13,6 +13,8 @@ import com.habeebcycle.microservice.library.util.exceptions.BadRequestException;
 import com.habeebcycle.microservice.library.util.exceptions.InvalidInputException;
 import com.habeebcycle.microservice.library.util.exceptions.NotFoundException;
 import com.habeebcycle.microservice.library.util.http.HttpErrorInfo;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +26,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.net.URI;
+import java.time.Duration;
 
 @Component
 @EnableBinding(MessageSources.class)
 public class ProductCompositeIntegration implements ProductService, RecommendationService, ReviewService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductCompositeIntegration.class);
+
+    private static final String CIRCUIT_BREAKER_NAME = "productService";
 
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper mapper;
@@ -45,13 +52,16 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 
     private final MessageSources messageSources;
 
+    private final int productServiceTimeout;
+
     private WebClient webClient;
 
     @Autowired
     public ProductCompositeIntegration(WebClient.Builder webClientBuilder, ObjectMapper mapper, MessageSources messageSources,
                                        @Value("${app.product-service.url}") String productServiceUrl,
                                        @Value("${app.recommendation-service.url}") String recommendationServiceUrl,
-                                       @Value("${app.review-service.url}") String reviewServiceUrl) {
+                                       @Value("${app.review-service.url}") String reviewServiceUrl,
+                                       @Value("${app.product-service.timeout}") int productServiceTimeout) {
 
         this.webClientBuilder = webClientBuilder;
         this.mapper = mapper;
@@ -59,6 +69,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         this.productServiceUrl = productServiceUrl;
         this.recommendationServiceUrl = recommendationServiceUrl;
         this.reviewServiceUrl = reviewServiceUrl;
+        this.productServiceTimeout = productServiceTimeout;
     }
 
     private WebClient getWebClient() {
@@ -69,10 +80,15 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         return webClient;
     }
 
+    @Retry(name = CIRCUIT_BREAKER_NAME)
+    @CircuitBreaker(name = CIRCUIT_BREAKER_NAME)
     @Override
-    public Mono<Product> getProduct(int productId){
+    public Mono<Product> getProduct(int productId, int delay, int faultPercent){
 
-        String url = productServiceUrl + "/product/" + productId;
+        URI url = UriComponentsBuilder
+                .fromUriString(productServiceUrl + "/product/{productId}?delay={delay}&faultPercent={faultPercent}")
+                .build(productId, delay, faultPercent);
+
         LOG.debug("Will call getProduct API on URL: {}", url);
 
         return getWebClient().get()
@@ -80,7 +96,8 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
                 .retrieve()
                 .bodyToMono(Product.class)
                 .log()
-                .onErrorMap(WebClientException.class, this::handleHttpClientException);
+                .onErrorMap(WebClientException.class, this::handleHttpClientException)
+                .timeout(Duration.ofSeconds(productServiceTimeout));
     }
 
     @Override

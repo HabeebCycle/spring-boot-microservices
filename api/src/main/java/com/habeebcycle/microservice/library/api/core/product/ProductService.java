@@ -15,7 +15,11 @@ public interface ProductService {
      * @return the product, if found, else null
      */
     @GetMapping(value = "/product/{productId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    Mono<Product> getProduct(@PathVariable int productId);
+    Mono<Product> getProduct(
+            @PathVariable int productId,
+            @RequestParam(value = "delay", required = false, defaultValue = "0") int delay,
+            @RequestParam(value = "faultPercent", required = false, defaultValue = "0") int faultPercent
+        );
 
     /**
      * This will be called by event-driven mechanism. Once their is a message

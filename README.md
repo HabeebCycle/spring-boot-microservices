@@ -164,5 +164,34 @@ hello word
 ```
 Getting service properties & profiles configurations
 ```shell
-curl -k https://user:root@localhost:8443/config/product-composite/docker -ks | jq
+curl -k https://user:root@localhost:8443/config/product-composite/docker -s | jq
+```
+
+### 10. Resilient API using Circuit breakers and retries from resilience4j project
+To access the state of individual services, use an alpine image with its wget command:
+```shell
+docker run --rm -it --network=service-network alpine wget product-composite-service:8080/actuator/health -qO - | jq -r .components.circuitBreakers.details.productService.details.state
+```
+
+To break the circuit breaker, run
+```shell
+ACCESS_TOKEN=$(curl -ks https://writer:secret@localhost:8443/oauth/token -d grant_type=password -dusername=username -dpassword=password | jq -r .access_token)
+curl -H "Authorization: Bearer $ACCESS_TOKEN" -ks https://localhost:8443/product-composite/2?delay=3 | jq .
+```
+
+To check the last three states of the circuit breaker, run
+```shell
+docker run --rm -it --network=service-network alpine wget \
+ product-composite-service:8080/actuator/circuitbreakerevents/productService/STATE_TRANSITION -qO - | jq -r \
+  '.circuitBreakerEvents[-3].stateTransition,.circuitBreakerEvents[-2].stateTransition,.circuitBreakerEvents[-1].stateTransition'
+```
+
+To check the retries' mechanism, run
+```shell
+time curl -H "Authorization: Bearer $ACCESS_TOKEN" -ks https://localhost:8443/product-composite/2?faultPercent=25 -w "%{http_code}\n" -o /dev/null
+```
+
+For the retry events
+```shell
+docker run --rm -it --network=service-network alpine wget  product-composite-service:8080/actuator/retryevents -qO - | jq  '.retryEvents[-2],.retryEvents[-1]'
 ```

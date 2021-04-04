@@ -82,6 +82,7 @@ server:
 app: # We are using service discovery
   product-service:
     url: http://product-service
+    timeout: 2  # For ResilientAPI retry
   recommendation-service:
     url: http://recommendation-service
   review-service:
@@ -93,6 +94,37 @@ logging:
     root: INFO
     com.habeebcycle: DEBUG
     org.springframework.web.server.adapter.HttpWebHandlerAdapter: TRACE
+
+# Resilience4J properties
+# #Enable circuit breaker health status
+management.health.circuitbreakers.enabled: true
+# CircuitBreakers & Retries
+resilience4j:
+  # Retry
+  retry:
+    instances:
+      productService:
+        maxRetryAttempts: 3
+        waitDuration: 1000
+        retryExceptions:
+          - java.io.IOException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+
+  # CircuitBreaker
+  circuitbreaker:
+    instances:
+      productService:
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        ignoreExceptions:
+          - com.habeebcycle.microservice.library.util.exceptions.BadRequestException
+          - com.habeebcycle.microservice.library.util.exceptions.InvalidInputException
+          - com.habeebcycle.microservice.library.util.exceptions.NotFoundException
 
 ---
 spring:
